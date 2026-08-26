@@ -27,6 +27,21 @@ the markers being tracked.
 | [The event system](docs/mm1/08-events.md) | solved: squares, facing masks, dispatch and handler idiom |
 | [Open questions](docs/mm1/open-questions.md) | what is left, and what was corrected along the way |
 
+## Might & Magic 2 — Gates to Another World
+
+| Topic | Status |
+|---|---|
+| [File inventory](docs/mm2/01-file-inventory.md) | first pass: what ships, what is readable, what is compressed |
+
+The short version, against the [fingerprints](docs/comparison/fingerprints.md):
+**it is not the same engine.** Per-map events moved from compiled code into
+data files, the overlays are now subsystems rather than maps, the executable
+went from 3 relocations to 500, art ships per adapter instead of being
+converted at runtime, and the run-length codec is gone. The rebuild New World
+Computing was expected somewhere around book three happened at book two.
+
+Decoding M&M2's compression is the gate to everything else in it.
+
 ## Method
 
 Every claim here was derived from the shipped files and validated against them,
@@ -64,23 +79,35 @@ python tools/mm1/disasm.py draw           # an engine routine, by symbol name
 python tools/mm1/disasm.py --ovr sorpigal 0xf508    # one event handler
 ```
 
-`tools/mm1/mmlib.py` is the shared reader library if you want to work with the
-data directly.
+```sh
+export MM2_DATA="/path/to/Might and Magic 2"
+
+python tools/mm2/dump_items.py            # M&M2's 256 items
+python tools/mm2/dump_font.py             # M&M2's 8x8 font
+```
+
+`tools/mm1/mmlib.py` and `tools/mm2/mmlib2.py` are the reader libraries if you
+want to work with the data directly.
 
 ## Layout
 
 ```
 docs/mm1/          Might & Magic 1
+docs/mm2/          Might & Magic 2
 docs/comparison/   cross-title analysis
 tools/png.py       shared, format-agnostic helpers
 tools/mm1/         Might & Magic 1 readers, dump scripts and disassembler
+tools/mm2/         Might & Magic 2 readers
+gamedata/mm1/      your own copy of each game (gitignored, never committed)
+gamedata/mm2/
 notes/mm1/         generated dumps
 ```
 
 ## Provenance
 
-Analysed against the GOG.com release of *Might and Magic 1* (a legally purchased
-copy), which ships the original DOS files unmodified alongside DOSBox.
+Analysed against the GOG.com releases of *Might and Magic 1* and *Might and
+Magic 2* (legally purchased copies), which ship the original DOS files
+unmodified alongside DOSBox.
 
 ## Legal
 

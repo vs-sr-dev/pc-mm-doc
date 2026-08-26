@@ -1,4 +1,5 @@
-# Original game files -- never redistributed. Point MM1_DATA at your own copy.
+# Original game files -- never redistributed. One subdirectory per title; point
+# MM1_DATA / MM2_DATA at your own copies instead if you keep them elsewhere.
 gamedata/
 
 # Generated output. These are verbatim extractions of game content, so they are

@@ -11,7 +11,7 @@ the parent tools/ directory.
 """
 import os, struct
 
-DATA = os.environ.get('MM1_DATA', 'gamedata')
+DATA = os.environ.get('MM1_DATA', os.path.join('gamedata', 'mm1'))
 
 # --- map / overlay index ------------------------------------------------------
 # The 55 map names, in the order they appear in the table at DS:0x0A07 in MM.EXE.
