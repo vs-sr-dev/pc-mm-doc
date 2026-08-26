@@ -53,12 +53,6 @@ hypothesis (drawn-vs-blocking) rather than a finding. Confirming it means
 reading the renderer. See doc 4 for what is measured and what the two candidate
 readings predict.
 
-## 4. Compass orientation
-
-The maze bit layout is fixed as (+X, −X, +Y, −Y). Which of those is north is
-not determined by the file. The `LOCATION:` / `FACING:` display code, or a
-cross-check against a known in-game position, would settle it.
-
 ## 5. Record field meanings
 
 Item records (10 stat bytes) and monster records (16 stat bytes) are located and

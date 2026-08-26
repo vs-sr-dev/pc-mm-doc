@@ -14,12 +14,12 @@ convention the graphics use (doc 5) — and both use the same per-tile encoding:
 
 ## Byte layout
 
-| Bits | Side |
-|---|---|
-| 0–1 | towards −Y |
-| 2–3 | towards −X |
-| 4–5 | towards +Y |
-| 6–7 | towards +X |
+| Bits | Axis | Compass |
+|---|---|---|
+| 0–1 | −Y | **West** |
+| 2–3 | −X | **South** |
+| 4–5 | +Y | **East** |
+| 6–7 | +X | **North** |
 
 | Value | Meaning |
 |---|---|
@@ -50,8 +50,28 @@ map preserves it — both scored 98.35 %. The tie was broken separately, by the
 event tables in the overlays: see doc 8. Session 1 documented this as row-major,
 which was wrong, and every map it rendered came out transposed.
 
-Note this fixes the *axes*, not the *compass*. Which direction is "north" needs
-a reference outside these files and is still open.
+### The compass
+
+North is **+X** and east is **+Y**. This comes from the teleport spell in
+`qcast`, which prompts `DIRECTION (N,E,S,W)`, stores the typed letter at
+`[2D51h]`, and then dispatches on it at `0x94D0`:
+
+```
+cmp al,'N'  ->  [3C39] += n     ; X   -> north is +X
+cmp al,'E'  ->  [3C38] += n     ; Y   -> east  is +Y
+cmp al,'S'  ->  [3C39] -= n     ; X
+    else        [3C38] -= n     ; Y   -> west  is -Y
+```
+
+(`[3C39]` is X and `[3C38]` is Y — doc 8.) Three independent things agree with
+it: the party-movement guards elsewhere in `qcast` test the masks `C0`, `30`,
+`0C`, `03` for X+1, Y+1, X−1, Y−1, which are exactly the four side fields above;
+the event direction masks use the same encoding (doc 8); and the four
+edge-transition routines set the entry coordinate to the opposite edge in each
+case (doc 7).
+
+So `tools/mm1/dump_maze.py` prints X up the page and Y across it, which puts
+north at the top.
 
 The residual 1.65 % is not noise. Broken down by the pair of values involved:
 

@@ -62,12 +62,13 @@ routine.
 ### The direction mask
 
 One byte per event, holding four 2-bit fields in **exactly the same layout as a
-maze tile** (doc 4): bits 0-1 `-Y`, 2-3 `-X`, 4-5 `+Y`, 6-7 `+X`. A field is
+maze tile** (doc 4): bits 0-1 west, 2-3 south, 4-5 east, 6-7 north. A field is
 `11` if the event fires when the party faces that way.
 
 In 808 of 821 mask bytes (98.4 %) every field is `00` or `11` — it is a mask,
 not a value. `FF` is by far the commonest (438), meaning "any direction"; then
-the four single-direction masks `C0`, `03`, `0C`, `30`.
+the four single-direction masks `C0` north, `30` east, `0C` south, `03` west —
+the same four values the party-movement code in `qcast` tests.
 
 ## Cross-check against the maze
 

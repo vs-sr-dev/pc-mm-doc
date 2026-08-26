@@ -56,10 +56,10 @@ bounds the block exactly, and it also names each byte by whoever reads it.
 | 0 | `getinfo`, `temple`, `training`, `food`, `unlock`, `use`, … | **map identifier** — all 55 maps hold a different value |
 | 1 | `encountr`, written by `saveros` | **map type**: 1 town/cave, 2 outdoor, 3 dungeon |
 | 2–7 | `encountr` | encounter setup, three pairs |
-| 8–10 | `loadcom` | edge transition, party leaving via **+X** |
-| 11–13 | `yplus` | edge transition, leaving via **+Y** |
-| 14–16 | `xplus` | edge transition, leaving via **−X** |
-| 17–19 | `ymin` | edge transition, leaving via **−Y** |
+| 8–10 | `loadcom` | edge transition, leaving **north** |
+| 11–13 | `yplus` | edge transition, leaving **east** |
+| 14–16 | `xplus` | edge transition, leaving **south** |
+| 17–19 | `ymin` | edge transition, leaving **west** |
 | 20–28, 33–34, 47 | `right8` | not identified |
 | 29 | `inwait` | 70–200, usually 100 |
 | 30–32 | — | never read with a literal index |
@@ -75,10 +75,10 @@ reading them:
 
 | routine | sets | meaning |
 |---|---|---|
-| `loadcom` `0x4FF8` | `X := 0` | walked off the +X edge, arrive at the west edge |
-| `yplus` `0x5022` | `Y := 0` | walked off the +Y edge, arrive at the bottom |
-| `xplus` `0x504C` | `X := 15` | walked off the −X edge, arrive at the east edge |
-| `ymin` `0x5076` | `Y := 15` | walked off the −Y edge, arrive at the top |
+| `loadcom` `0x4FF8` | `X := 0` | walked off the **north** edge (+X), arrive at the south edge |
+| `yplus` `0x5022` | `Y := 0` | walked off the **east** edge (+Y), arrive at the west edge |
+| `xplus` `0x504C` | `X := 15` | walked off the **south** edge (−X), arrive at the north edge |
+| `ymin` `0x5076` | `Y := 15` | walked off the **west** edge (−Y), arrive at the east edge |
 
 All four then jump to a shared tail at `0x509D`.
 

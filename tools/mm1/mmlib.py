@@ -92,10 +92,13 @@ def to_rgb(buf, cols, height, pal=PAL):
 #   bytes   0..255  wall plane   (physical walls: what blocks movement)
 #   bytes 256..511  second plane (per-side attribute; see docs/03)
 # Each plane is a 16x16 grid stored COLUMN-MAJOR -- index = x*16 + y, the same
-# convention the graphics use. One byte per tile, four 2-bit fields, one per side:
-#   bits 0-1 = -Y   bits 2-3 = -X   bits 4-5 = +Y   bits 6-7 = +X
+# convention the graphics use. One byte per tile, four 2-bit fields, one per side.
+# North is +X and East is +Y (see docs/mm1/04-maze-format.md):
+#   bits 0-1 = West (-Y)   bits 2-3 = South (-X)
+#   bits 4-5 = East (+Y)   bits 6-7 = North (+X)
 # Values: 0 open, 1 wall, 2 door, 3 special/solid.
-S_MINUS_Y, S_MINUS_X, S_PLUS_Y, S_PLUS_X = 0, 1, 2, 3
+S_WEST, S_SOUTH, S_EAST, S_NORTH = 0, 1, 2, 3
+DIR_MASK = {'N': 0xC0, 'E': 0x30, 'S': 0x0C, 'W': 0x03}
 
 def read_maze(which):
     i = MAPS.index(which) if isinstance(which, str) else which
