@@ -19,20 +19,17 @@ Two header fields remain unexplained: `+0` (always `0x00F2`) and `+12` (always
 `0xF451 + code size`, i.e. 62 bytes below the code destination). Nothing
 observed so far depends on either.
 
-## 1b. What indexes the event-handler table
+## 1b. The per-map parameter block
 
-Each overlay's data block holds a table of pointers into its own code — 816
-handlers across the 55 maps (doc 7). The engine receives a pointer to it at
-overlay entry. What selects an entry is not traced: the natural guess is a
-per-square event id, which would tie the table to the maze data, but that is a
-guess. Answering this is probably the single highest-value next step, because it
-connects map squares to map behaviour.
+The first 0x32 bytes of every overlay's data block, before the event count, are
+not decoded. They plausibly hold the map's monster set, encounter rates,
+starting position and light level, but nothing is established. (What follows
+them *is* now decoded — see doc 8.)
 
-## 1c. The per-map parameter block
+## 1c. Two maps that do not fit the event layout
 
-The variable-length block that precedes the handler table (0x3F to 0x77 bytes)
-is not decoded. It plausibly holds the map's monster set, encounter rates,
-starting position and light level, but nothing is established.
+`demon` uses a different dispatcher shape, and `pp4` declares 20 events but has
+only 10 valid handler words. Both need looking at individually. See doc 8.
 
 ## 2. `WALLPIX.DTA` sprite geometry
 

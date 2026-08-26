@@ -91,9 +91,11 @@ def to_rgb(buf, cols, height, pal=PAL):
 # 55 blocks of 512 bytes, one per map, in MAPS order.
 #   bytes   0..255  wall plane   (physical walls: what blocks movement)
 #   bytes 256..511  second plane (per-side attribute; see docs/03)
-# Each plane is a 16x16 grid, row-major, one byte per tile holding four 2-bit
-# fields:  bits 0-1 = -X side, 2-3 = -Y side, 4-5 = +X side, 6-7 = +Y side.
-W_MINUS_X, W_MINUS_Y, W_PLUS_X, W_PLUS_Y = 0, 1, 2, 3
+# Each plane is a 16x16 grid stored COLUMN-MAJOR -- index = x*16 + y, the same
+# convention the graphics use. One byte per tile, four 2-bit fields, one per side:
+#   bits 0-1 = -Y   bits 2-3 = -X   bits 4-5 = +Y   bits 6-7 = +X
+# Values: 0 open, 1 wall, 2 door, 3 special/solid.
+S_MINUS_Y, S_MINUS_X, S_PLUS_Y, S_PLUS_X = 0, 1, 2, 3
 
 def read_maze(which):
     i = MAPS.index(which) if isinstance(which, str) else which
@@ -102,7 +104,7 @@ def read_maze(which):
     return blk[:256], blk[256:]
 
 def side(plane, x, y, k):
-    return (plane[y*16 + x] >> (2*k)) & 3
+    return (plane[x*16 + y] >> (2*k)) & 3
 
 # --- MM.RSM (linker symbol map) ----------------------------------------------
 def read_symbols():

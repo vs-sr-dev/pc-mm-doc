@@ -20,10 +20,11 @@ the markers being tracked.
 | [File inventory](docs/mm1/01-file-inventory.md) | complete |
 | [Executable layout and the shipped symbol map](docs/mm1/02-executable-and-symbols.md) | solid |
 | [Per-map code overlays (`*.OVR`)](docs/mm1/03-map-overlays.md) | header and load addresses solved; engine call graph resolved |
-| [Maze format (`MAZEDATA.DTA`)](docs/mm1/04-maze-format.md) | wall plane solved; second plane partly understood |
+| [Maze format (`MAZEDATA.DTA`)](docs/mm1/04-maze-format.md) | wall plane solved (column-major); second plane partly understood |
 | [Graphics formats (RLE, `SCREEN*`, `MONPIX`, `WALLPIX`)](docs/mm1/05-graphics-formats.md) | solved except `WALLPIX` sprite geometry |
 | [Data tables (items, monsters, hints)](docs/mm1/06-data-tables.md) | located and partly decoded |
 | [The overlay data block](docs/mm1/07-overlay-data-block.md) | handler table and text solved; parameters not decoded |
+| [The event system](docs/mm1/08-events.md) | solved: squares, facing masks and handlers |
 | [Open questions](docs/mm1/open-questions.md) | — |
 
 ## Method

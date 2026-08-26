@@ -8,20 +8,28 @@ Each 512-byte block is two 256-byte planes:
 +0x100  attribute plane   16x16 tiles, one byte each
 ```
 
-Both planes are row-major, 16 bytes per row, and both use the same per-tile
-encoding: **four 2-bit fields, one per side of the tile.**
+Both planes are stored **column-major** — `index = x*16 + y`, the same
+convention the graphics use (doc 5) — and both use the same per-tile encoding:
+**four 2-bit fields, one per side of the tile.**
 
 ## Byte layout
 
 | Bits | Side |
 |---|---|
-| 0–1 | towards −X (west) |
-| 2–3 | towards −Y (previous row) |
-| 4–5 | towards +X (east) |
-| 6–7 | towards +Y (next row) |
+| 0–1 | towards −Y |
+| 2–3 | towards −X |
+| 4–5 | towards +Y |
+| 6–7 | towards +X |
 
-Values are 0 = open, and 1/2/3 = wall variants (1 is by far the commonest;
-2 and 3 behave asymmetrically, see below).
+| Value | Meaning |
+|---|---|
+| 0 | open |
+| 1 | wall |
+| 2 | door |
+| 3 | special / solid fill |
+
+Value 2 is a door: events with a single-direction mask face one 30 % of the time
+(doc 8), which is what shop and inn entrances look like.
 
 ### How this was determined
 
@@ -32,12 +40,18 @@ orderings, across all 55 maps:
 
 | assignment | agreement |
 |---|---|
-| **bits 6-7 ↔ bits 2-3 vertically, bits 4-5 ↔ bits 0-1 horizontally, row-major** | **98.35 %** |
+| **+X = bits 6-7, −X = bits 2-3, +Y = bits 4-5, −Y = bits 0-1** | **98.35 %** |
 | next best | 75.23 % |
 
-The gap is decisive. Note this fixes the *axes*, not the *compass*: field pairs
-are (+Y, −Y) and (+X, −X). Which of those is "north" needs a reference outside
-the file and is left open.
+The gap is decisive.
+
+Reciprocity alone cannot tell row-major from column-major, because transposing a
+map preserves it — both scored 98.35 %. The tie was broken separately, by the
+event tables in the overlays: see doc 8. Session 1 documented this as row-major,
+which was wrong, and every map it rendered came out transposed.
+
+Note this fixes the *axes*, not the *compass*. Which direction is "north" needs
+a reference outside these files and is still open.
 
 The residual 1.65 % is not noise. Broken down by the pair of values involved:
 
