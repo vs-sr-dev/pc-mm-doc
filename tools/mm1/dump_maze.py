@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Print a map's wall plane as ASCII.
 
-  python tools/dump_maze.py sorpigal [plane]
+  python tools/mm1/dump_maze.py sorpigal [plane]
 
 plane 0 (default) is the physical wall plane; plane 1 is the second,
 per-side attribute plane. Values per side: 0 open, 1/2/3 wall variants.
 """
 import os, sys
-sys.path.insert(0, os.path.dirname(__file__))
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path[:0] = [HERE, os.path.dirname(HERE)]   # this game's lib, then shared tools/
 import mmlib
 
 name = sys.argv[1] if len(sys.argv) > 1 else 'sorpigal'

@@ -5,11 +5,12 @@ Overlay code is loaded at 0xF48F (the word at header offset +2) and calls the
 engine with ordinary `call rel16`, so every target can be matched against the
 symbol table in MM.RSM.
 
-  python tools/ovr_calls.py            # ranked call graph over all 55 maps
-  python tools/ovr_calls.py sorpigal   # one map, in address order
+  python tools/mm1/ovr_calls.py            # ranked call graph over all 55 maps
+  python tools/mm1/ovr_calls.py sorpigal   # one map, in address order
 """
 import os, sys, struct, collections
-sys.path.insert(0, os.path.dirname(__file__))
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path[:0] = [HERE, os.path.dirname(HERE)]   # this game's lib, then shared tools/
 import mmlib
 
 CODE_BASE = 0xF48F

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Extract every picture in the game to PNG.
 
-  python tools/extract_gfx.py [outdir]
+  python tools/mm1/extract_gfx.py [outdir]
 
 SCREEN0..9 are full 320x200 CGA frames. MONPIX.DTA holds 76 monster/scene
 portraits, each 26 bytes (104 px) wide by 96 rows. WALLPIX.DTA's internal
 sprite geometry is not yet solved, so its 18 sets are dumped as raw .bin.
 """
 import os, sys
-sys.path.insert(0, os.path.dirname(__file__))
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path[:0] = [HERE, os.path.dirname(HERE)]   # this game's lib, then shared tools/
 import mmlib, png
 
 out = sys.argv[1] if len(sys.argv) > 1 else 'out'

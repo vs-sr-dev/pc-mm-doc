@@ -63,7 +63,7 @@ Record format, after a 0x23-byte header:
 ```
 
 `type` is `0x02` for code and `0x03` for data (`class` is `0x28` for every
-symbol). Run `python tools/dump_symbols.py` for the full list; a sample:
+symbol). Run `python tools/mm1/dump_symbols.py` for the full list; a sample:
 
 ```
 code 0000  ovbgn            code 0d5b  loadmaze         data 9972  itemlow

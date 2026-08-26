@@ -92,6 +92,6 @@ plane 0's own 98.35 %. The planes are independent.
 ## Reading it
 
 ```sh
-python tools/dump_maze.py sorpigal      # physical walls
-python tools/dump_maze.py areaa1 1      # attribute plane
+python tools/mm1/dump_maze.py sorpigal      # physical walls
+python tools/mm1/dump_maze.py areaa1 1      # attribute plane
 ```

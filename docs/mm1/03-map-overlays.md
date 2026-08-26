@@ -95,8 +95,8 @@ message, clears lines 13–19, rolls `random`, branches. These overlays are even
 scripts — they are simply compiled to native code instead of interpreted.
 
 ```sh
-python tools/ovr_calls.py            # the table above
-python tools/ovr_calls.py sorpigal   # one map's calls in address order
+python tools/mm1/ovr_calls.py            # the table above
+python tools/mm1/ovr_calls.py sorpigal   # one map's calls in address order
 ```
 
 ## Consequences of the design

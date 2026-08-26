@@ -5,6 +5,9 @@ mmlib -- readers for the data files of Might & Magic: Secret of the Inner Sanctu
 Everything here was derived by inspecting the shipped files; see docs/ for how
 each format was established. Paths are relative to the repository root by
 default and can be overridden with the MM1_DATA environment variable.
+
+This module is Might & Magic 1 only; anything shared across the series lives in
+the parent tools/ directory.
 """
 import os, struct
 

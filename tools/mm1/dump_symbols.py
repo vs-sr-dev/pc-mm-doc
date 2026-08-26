@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Print the 579 symbols from MM.RSM, with the MM.EXE file offset for each."""
 import os, sys
-sys.path.insert(0, os.path.dirname(__file__))
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path[:0] = [HERE, os.path.dirname(HERE)]   # this game's lib, then shared tools/
 import mmlib
 
 TYPE = {0x02: 'code', 0x03: 'data', 0x09: 'abs ', 0x00: '----'}

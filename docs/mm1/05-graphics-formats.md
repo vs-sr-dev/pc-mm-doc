@@ -18,7 +18,7 @@ The `+1` is not a guess. Decoding the ten `SCREEN` files with a plain
 four repeats — the break-even point for a three-byte escape. The engine-side
 symbol is `uncomp` at code offset `0x1504`.
 
-`tools/mmlib.py` implements both directions and the encoder round-trips.
+`tools/mm1/mmlib.py` implements both directions and the encoder round-trips.
 
 ## Pixel layout
 
@@ -68,7 +68,7 @@ check on the container and the codec both.
 
 2,496 bytes = 26 byte-columns × 96 rows = **104 × 96 pixels**. All 76 decode
 cleanly: monsters, plus a few scene portraits (treasure chests, a castle, a
-throne room). `python tools/extract_gfx.py` writes them out.
+throne room). `python tools/mm1/extract_gfx.py` writes them out.
 
 76 portraits serve roughly 195 monster entries, so pictures are shared.
 
