@@ -42,15 +42,13 @@ segment's address space:
 
 ```
 0xC93E   _Eol_          last symbol; end of initialised data
-0xC940   overlay data   loaded here (see doc 3)
-0xF443   overlay header \  overlay code loaded here
-0xF451   overlay code   /
+0xC940   overlay data   loaded here
+0xF48F   overlay code   loaded here
 ```
 
-`0xC940` is `_Eol_ + 2`, i.e. the overlay data area starts immediately after the
-end of the linked image. That is exactly what the constant at offset `+6` of
-every `.OVR` header says, and the string pointers inside the overlay code all
-fall in `0xC940`…`0xC940 + datasize`.
+`0xC940` is `_Eol_ + 2`: the overlay data area starts immediately after the end
+of the linked image. Both addresses are the destination fields of every `.OVR`
+header and both are confirmed by measurement — see [doc 3](03-map-overlays.md).
 
 ## MM.RSM — the shipped symbol map
 

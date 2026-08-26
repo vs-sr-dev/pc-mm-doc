@@ -13,7 +13,7 @@ re-implementation, and contains no game assets.
 |---|---|
 | [File inventory](docs/01-file-inventory.md) | complete |
 | [Executable layout and the shipped symbol map](docs/02-executable-and-symbols.md) | solid |
-| [Per-map code overlays (`*.OVR`)](docs/03-map-overlays.md) | container solved, code not yet analysed |
+| [Per-map code overlays (`*.OVR`)](docs/03-map-overlays.md) | header and load addresses solved; engine call graph resolved |
 | [Maze format (`MAZEDATA.DTA`)](docs/04-maze-format.md) | wall plane solved; second plane partly understood |
 | [Graphics formats (RLE, `SCREEN*`, `MONPIX`, `WALLPIX`)](docs/05-graphics-formats.md) | solved except `WALLPIX` sprite geometry |
 | [Data tables (items, monsters, hints)](docs/06-data-tables.md) | located and partly decoded |
@@ -39,6 +39,7 @@ export MM1_DATA="/path/to/Might and Magic 1"
 python tools/extract_gfx.py out      # every picture in the game -> PNG
 python tools/dump_maze.py sorpigal   # a map's wall plane as ASCII
 python tools/dump_symbols.py         # the 579 symbols shipped in MM.RSM
+python tools/ovr_calls.py            # engine calls made by the 55 map overlays
 ```
 
 `tools/mmlib.py` is the shared reader library if you want to work with the data

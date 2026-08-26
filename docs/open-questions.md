@@ -4,13 +4,20 @@ Ordered by how much they would unlock.
 
 ## 1. The overlay code (`*.OVR`)
 
-Nothing inside the 55 overlays has been disassembled. This is where all
-per-map behaviour lives: which square triggers which event, every piece of map
-text, treasure and encounter placement, and the transitions between maps. It is
-by far the biggest remaining piece.
+The overlays' engine calls are all resolved (doc 3), but the code between them
+has not been disassembled. This is where all per-map behaviour lives: which
+square triggers which event, every piece of map text, treasure and encounter
+placement, and the transitions between maps. It is by far the biggest remaining
+piece.
 
-The way in is the entry stub, which is identical in all 55 files and registers a
-dispatch table at code offset `+0x50` (`0xF4A1`) plus the data base `0xC940`.
+The way in is now open: the load address `0xF48F` is established, so a
+disassembler can be pointed at the code with correct symbol resolution. The
+entry stub, identical in all 55 files, registers a dispatch table at code offset
+`+0x12` (`0xF4A1`) and the data base `0xC940`.
+
+Two header fields remain unexplained: `+0` (always `0x00F2`) and `+12` (always
+`0xF451 + code size`, i.e. 62 bytes below the code destination). Nothing
+observed so far depends on either.
 
 ## 2. `WALLPIX.DTA` sprite geometry
 
