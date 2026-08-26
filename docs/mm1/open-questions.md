@@ -61,13 +61,19 @@ Item records (10 stat bytes) and monster records (16 stat bytes) are located and
 tiled exactly, but the individual fields are not decoded. Doing so is mostly a
 matter of correlating with in-game values.
 
-## 6. The `mondata` and second-base anomaly
+## 6. Which segment the overlay data lands in
 
-`mondata` points 134 records into the monster table rather than at its start,
-and a handful of late data symbols (`tp1`…`tp5`, `rum`, `spd1c1`) do not land on
-plausible boundaries under the otherwise well-confirmed data base `0x10200`.
-Something about the data segment's structure is still not understood. See
-doc 6.
+The `.OVR` header's data destination, `0xC940`, is solid as an offset — all 197
+string pointers in overlay code fall inside `[0xC940, 0xC940 + data size)`. But
+it cannot be an offset in either known segment: both hold live content there
+(the monster table's tail in one, 51 named routines in the other). A third,
+probably run-time-allocated block is the likely answer, and `getseg_` (`0x061A`)
+plus `ovloader_` (`0x010D`) are where to look. See doc 2.
+
+Related and probably the same puzzle: `mondata` points 134 records into the
+monster table rather than at its start, and a few late type-`0x03` symbols
+(`tp1`…`tp5`, `rum`, `spd1c1`) do not land on plausible boundaries under the
+otherwise well-confirmed base `0x10200`. See doc 6.
 
 ## 7. `ROSTER.DTA`
 

@@ -62,9 +62,9 @@ instruction boundary; under any neighbouring base it lands mid-instruction.
 instructions that hand a string pointer to the engine. All **197** such
 immediates across all 55 files fall inside `[+6, +6 + (+8))` — 100 %.
 
-`0xC940` is `_Eol_ + 2`, where `_Eol_` (`0xC93E`) is the last symbol in
-`MM.RSM`: the overlay data area begins immediately after the end of the linked
-image.
+What is established is the offset, not the segment: `0xC940` collides with live
+content in both known segments, so overlay data must go to a third, probably
+run-time-allocated block. See [doc 2](02-executable-and-symbols.md).
 
 Fields `+0` and `+12` are still unexplained. `+12` tracks code size with a
 constant offset (`+12 − code size = 0xF451` in every file), 62 bytes below the

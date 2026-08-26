@@ -20,14 +20,16 @@ program that computes what it needs at runtime.
 
 ## Two segments
 
-Symbols (below) fall into two ranges that do not overlap: code offsets run from
-`0x0000` to about `0xEC9B`, data offsets from about `0x50A6` to `0xC93E`. Since
-the image is 118,752 bytes — a little under two 64 KB segments — the layout is:
+Symbols (below) carry a type byte: `0x02` and `0x03`. The two form **distinct
+address spaces**, not one. Type `0x02` runs from `0x0000` to `0xF482`, type
+`0x03` from `0x50A6` to `0xC82E`; they overlap numerically, yet `itemlow`
+(type `0x03`, `0x9972`) and `combat` (type `0x02`, `0x9799`) sit 473 apart while
+their contents are 64 KB apart in the file. Two segments:
 
 ```
-file 0x000200  image 0x00000   code segment, DS-independent   (offsets 0x0000..0xFFFF)
-file 0x010200  image 0x10000   data segment                   (offsets 0x0000..~0xC93E)
-file 0x01D1E0  image 0x1CFE0   end of image; BSS follows
+file 0x000200  image 0x00000   type-0x02 space (code)   last symbol brk_ at 0xF482
+file 0x010200  image 0x10000   type-0x03 space (data)   content runs to 0xCFE0
+file 0x01D1E0  image 0x1CFE0   end of image
 ```
 
 **The data segment begins at file offset `0x10200`.** This was confirmed, not
@@ -37,18 +39,33 @@ the item-name table (`SPEAR`, `SHORT SWORD`, `MACE`, …) and `itemhigh`
 (`10 FOOT POLE`, `GARLIC`, `WOLFSBANE`, …). Two independent exact hits on
 record boundaries.
 
-Above the static data the game keeps two overlay buffers, both in the code
-segment's address space:
+## Where the overlays land
 
-```
-0xC93E   _Eol_          last symbol; end of initialised data
-0xC940   overlay data   loaded here
-0xF48F   overlay code   loaded here
-```
+Every `.OVR` header names two destinations, `0xF48F` for code and `0xC940` for
+data, and both are confirmed by measurement (see [doc 3](03-map-overlays.md)).
 
-`0xC940` is `_Eol_ + 2`: the overlay data area starts immediately after the end
-of the linked image. Both addresses are the destination fields of every `.OVR`
-header and both are confirmed by measurement — see [doc 3](03-map-overlays.md).
+**Overlay code, `0xF48F`, is placed.** It sits 13 bytes above `brk_` (`0xF482`),
+the last type-`0x02` symbol — and `brk_` is a C runtime's program-break
+variable, i.e. the top of the static image. The overlay code buffer is exactly
+"just past the end of everything the linker placed", which is also why overlay
+code can call the engine with plain `call rel16`.
+
+**Overlay data, `0xC940`, is not placed.** `0xC940` cannot be an offset in
+either known segment, because both already hold live content there: in the
+type-`0x03` space it is the tail of the monster table (`AOKRIM`) with the hint
+strings 47 bytes later, and in the type-`0x02` space it is code, with 51 named
+routines between `0xC940` and `0xEC9B`. Loading a map there would destroy either
+one.
+
+So the overlay data area is a third address space, most likely a block allocated
+at run time — the engine has a `getseg_` routine at `0x061A`. Resolving this
+means reading `ovloader_` (`0x010D`). Until then, treat `0xC940` as an offset
+whose segment is unknown.
+
+An earlier version of this document claimed `0xC940` was `_Eol_ + 2`, the end of
+the linked image. That does not hold: `_Eol_` is an absolute symbol (type
+`0x09`), initialised data continues for another 1,186 bytes past it, and the
+arithmetic was a coincidence.
 
 ## MM.RSM — the shipped symbol map
 
