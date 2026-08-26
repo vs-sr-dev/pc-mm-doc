@@ -23,7 +23,7 @@ the markers being tracked.
 | [Maze format (`MAZEDATA.DTA`)](docs/mm1/04-maze-format.md) | wall plane solved (column-major); second plane partly understood |
 | [Graphics formats (RLE, `SCREEN*`, `MONPIX`, `WALLPIX`)](docs/mm1/05-graphics-formats.md) | solved except `WALLPIX` sprite geometry |
 | [Data tables (items, monsters, hints)](docs/mm1/06-data-tables.md) | located and partly decoded |
-| [The overlay data block](docs/mm1/07-overlay-data-block.md) | handler table and text solved; parameters not decoded |
+| [The overlay data block](docs/mm1/07-overlay-data-block.md) | text solved; parameter block bounded and attributed |
 | [The event system](docs/mm1/08-events.md) | solved: squares, facing masks and handlers |
 | [Open questions](docs/mm1/open-questions.md) | — |
 
@@ -51,6 +51,7 @@ python tools/mm1/dump_maze.py sorpigal   # a map's wall plane as ASCII
 python tools/mm1/dump_symbols.py         # the 579 symbols shipped in MM.RSM
 python tools/mm1/ovr_calls.py            # engine calls made by the 55 map overlays
 python tools/mm1/ovr_text.py sorpigal    # a map's event-handler table and text
+python tools/mm1/ovr_params.py sorpigal  # a map's 50 parameter bytes, annotated
 ```
 
 `tools/mm1/mmlib.py` is the shared reader library if you want to work with the

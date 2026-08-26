@@ -21,10 +21,15 @@ observed so far depends on either.
 
 ## 1b. The per-map parameter block
 
-The first 0x32 bytes of every overlay's data block, before the event count, are
-not decoded. They plausibly hold the map's monster set, encounter rates,
-starting position and light level, but nothing is established. (What follows
-them *is* now decoded — see doc 8.)
+Bounded at exactly 50 bytes and every byte attributed to the routines that read
+it (doc 7), with index 0 identified as the map id and index 1 as the map type.
+What remains is the encoding of individual fields — in particular the first two
+bytes of each of the four edge-transition triples, which name the destination
+map somehow but not by its index in the 55-map table. Disassembling the shared
+tail at `0x509D` and `loadnext` (`0x50E3`) should settle it.
+
+Indices 30, 31 and 32 are never read with a literal index anywhere in the
+engine, which is worth explaining on its own.
 
 ## 1c. Two maps that do not fit the event layout
 

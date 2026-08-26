@@ -4,8 +4,8 @@ Every `.OVR` carries a data half that is loaded to `0xC940` (doc 3). It has
 three regions, in this order:
 
 ```
-0xC940   per-map binary parameters   variable length, not decoded
-         event-handler table         words pointing into this overlay's code
+0xC940   per-map parameters          exactly 50 bytes
+0xC972   event count, then the event tables      (doc 8)
          text                        NUL-terminated strings
 ```
 
@@ -45,13 +45,61 @@ overlay entry (`mov [0134h], ax`), and the natural guess is that a per-square
 event id selects a handler, but that has not been traced. See
 [open questions](open-questions.md).
 
-## Where the table starts
+## The parameter block
 
-The parameter block before it is **variable in length** — between `0x3F` and
-`0x77` bytes across the 55 maps — and no consistent delimiter separates it from
-the table (`FF FF` precedes the table in 20 of 55 files, and nothing does in the
-rest). So the parameter block is genuinely per-map data rather than a fixed
-header, and it is not decoded.
+The first 50 bytes are a fixed header. The engine never touches them directly:
+it goes through an indexed accessor — `0x0D5B` reads a byte, `0x0D66` writes one
+— with the overlay's data base in `[0132h]`. There are **80 such call sites in
+the engine and every one uses a literal index**, all in the range 0–49. That
+bounds the block exactly, and it also names each byte by whoever reads it.
+
+| index | consumers | reading |
+|---|---|---|
+| 0 | `getinfo`, `temple`, `training`, `food`, `unlock`, `use`, … | **map identifier** — all 55 maps hold a different value |
+| 1 | `encountr`, written by `saveros` | **map type**: 1 town/cave, 2 outdoor, 3 dungeon |
+| 2–7 | `encountr` | encounter setup, three pairs |
+| 8–10 | `loadcom` | edge transition, party leaving via **+X** |
+| 11–13 | `yplus` | edge transition, leaving via **+Y** |
+| 14–16 | `xplus` | edge transition, leaving via **−X** |
+| 17–19 | `ymin` | edge transition, leaving via **−Y** |
+| 20–28, 33–34, 47 | `right8` | not identified |
+| 29 | `inwait` | 70–200, usually 100 |
+| 30–32 | — | never read with a literal index |
+| 35–43 | `qcast` | spell handling |
+| 44 | `getviewo` | 8–40 |
+| 45, 48, 49 | `unlock`, `search`, `searchit` | lock and search difficulty |
+| 46 | `plot`, `qcast` | |
+
+### The four edge transitions
+
+Each is three bytes and each has a routine that sets the entry coordinate before
+reading them:
+
+| routine | sets | meaning |
+|---|---|---|
+| `loadcom` `0x4FF8` | `X := 0` | walked off the +X edge, arrive at the west edge |
+| `yplus` `0x5022` | `Y := 0` | walked off the +Y edge, arrive at the bottom |
+| `xplus` `0x504C` | `X := 15` | walked off the −X edge, arrive at the east edge |
+| `ymin` `0x5076` | `Y := 15` | walked off the −Y edge, arrive at the top |
+
+All four then jump to a shared tail at `0x509D`.
+
+Two things corroborate the reading. In every town, cave and dungeon the four
+triples are **identical** — those maps are sealed, so any edge leads to the one
+place you came from — while the outdoor maps have four different triples. And
+the third byte of each triple takes exactly the same 1–3 values as index 1, the
+map type.
+
+What the first two bytes encode is **not** established. The first ranges 0–27,
+the second 0–15, and neither behaves like a plain index into the 55-map table:
+`areaa1` names its east and south neighbours identically, which no 5×4 grid
+does. Decoding them means disassembling the shared tail at `0x509D` and
+`loadnext` (`0x50E3`).
+
+```sh
+python tools/mm1/ovr_params.py            # index -> consumers
+python tools/mm1/ovr_params.py sorpigal   # one map's 50 bytes, annotated
+```
 
 ## Text
 
