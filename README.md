@@ -34,11 +34,16 @@ the markers being tracked.
 | [File inventory](docs/mm2/01-file-inventory.md) | first pass: what ships, what is readable, what is compressed |
 
 The short version, against the [fingerprints](docs/comparison/fingerprints.md):
-**it is not the same engine.** Per-map events moved from compiled code into
-data files, the overlays are now subsystems rather than maps, the executable
-went from 3 relocations to 500, art ships per adapter instead of being
-converted at runtime, and the run-length codec is gone. The rebuild New World
-Computing was expected somewhere around book three happened at book two.
+**it is not the same engine, and that is measured rather than inferred from the
+file layout.** No M&M2 binary shares a single 16-byte window with `MM.EXE`,
+while the same test finds 157 contiguous shared bytes between `MM.EXE` and
+M&M1's own setup utility. On top of that, per-map events moved from compiled
+code into data files, the overlays became subsystems rather than maps, the
+executable went from 3 relocations to 500, and art ships per adapter. The
+rebuild expected somewhere around book three happened at book two.
+
+The *content*, meanwhile, is continuous: 37 % of M&M1's items have a
+counterpart in M&M2's list, in largely the same order.
 
 Decoding M&M2's compression is the gate to everything else in it.
 
@@ -53,9 +58,10 @@ is obfuscated by a rotate-and-subtract with a running key; both constants were
 solved for, and the answer is confirmed by 798 members tiling their two
 containers with zero overlap and zero unused bytes.
 
-Three consecutive titles, three architectures — see the
-[fingerprints](docs/comparison/fingerprints.md) for what that does to the
-comparison this project was set up to make.
+Its **packaging** is a third distinct shape. Its engine has not been tested at
+all — `MM3.EXE` is packed and the archive members are compressed — so whether
+M&M3 recycles M&M2's engine is open. See the
+[fingerprints](docs/comparison/fingerprints.md).
 
 ## Method
 
@@ -117,6 +123,7 @@ docs/mm2/          Might & Magic 2
 docs/mm3/          Might & Magic 3
 docs/comparison/   cross-title analysis
 tools/png.py       shared, format-agnostic helpers
+tools/code_overlap.py  cross-title binary comparison
 tools/mm1/         Might & Magic 1 readers, dump scripts and disassembler
 tools/mm2/         Might & Magic 2 readers
 tools/mm3/         Might & Magic 3 readers

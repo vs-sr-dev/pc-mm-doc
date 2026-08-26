@@ -26,6 +26,7 @@ later title. Every game column says what that game does, not a prediction.
 | 12 | Font | shipped as a file, or built at runtime? | built in memory at startup | shipped: `MM2.CH`, 128 glyphs of 8×8, ASCII-indexed | unknown |
 | 13 | Relocations | how many does the executable carry? | **3** | **500** | n/a — `MM3.EXE` is packed |
 | 14 | Packaging | loose files, or an archive? | 75 loose files | 94 loose files | **two hashed archives**, six files in all |
+| 15 | Binary code reuse | any long byte run shared with the previous game's binaries? | — | **none with M&M1** | untestable: `MM3.EXE` is packed |
 
 ## Marker 3 flipped immediately
 
@@ -55,6 +56,71 @@ content out of data files, ships art per adapter and draws it through a driver.
 The rebuild happened between book one and book two, not later. Whatever
 continuity survives the jump is therefore *content*, not architecture — and
 some does: both item tables are name-first and both end on a joke item.
+
+## Packaging is not the engine — how much of this is really a rebuild?
+
+Most markers above describe how a game is *packaged*: how many files, whether
+art ships per adapter, whether there is an archive. A studio can repackage
+without rewriting a line of engine code, so on their own these markers cannot
+tell a rebuild from a re-wrap. That distinction is worth testing directly, and
+marker 15 does it.
+
+`tools/code_overlap.py` indexes every 16-byte window of one binary and looks for
+it in another, extending each hit as far as it matches. Runs made of padding are
+discarded — long stretches of zeroes match between any two DOS binaries and mean
+nothing. What survives is shared *content*: reused hand-written assembly, a
+library routine, a whole function lifted across.
+
+The control comes first, because a null result is only worth reading if the test
+can find a positive one:
+
+| pair | substantive shared windows | longest run |
+|---|---:|---:|
+| `MM.EXE` vs `GRAPHSET.EXE` — M&M1's own setup utility | **25** | **157 B** |
+| `MM.EXE` vs M&M2's `MM2.EXE` | 0 | 0 |
+| `MM.EXE` vs M&M2's `2PLAY.OVL` | 0 | 0 |
+| `MM.EXE` vs M&M2's `2COMBAT.OVL` | 0 | 0 |
+| `MM.EXE` vs M&M2's compressed `MONSTERS.DAT` — chance | 0 | 0 |
+
+The test sees 157 contiguous bytes shared between M&M1 and a utility from the
+same build, and **not one 16-byte window** shared between M&M1 and any M&M2
+binary. So the 1 → 2 rebuild is not just repackaging: no binary code carried
+over.
+
+Two honest limits on that. It rules out *binary* reuse, not reuse of the C
+source recompiled by a different toolchain — though the jump from 3 relocations
+to 500 says the toolchain and memory model changed too. And it says nothing at
+all about M&M3, because `MM3.EXE` is packed: comparing against it returns zero
+for a reason that has nothing to do with the question.
+
+**For M&M3 there is currently no engine evidence either way.** Everything
+documented about it is the container. Whether the engine inside is M&M2's,
+repackaged, is genuinely open, and stays open until either the member
+compression or the executable is unpacked. An earlier version of this file
+called M&M3 a third architecture on the strength of its file layout alone;
+that was packaging talking.
+
+## What *is* recycled: the content
+
+While no code carries over from M&M1 to M&M2, plenty of content does. Comparing
+the two item tables, both truncated to M&M2's narrower 12-character field:
+
+* 39 names match exactly, and **87 of 234 — 37 %** have a close counterpart
+  (`ACCURATE SWORD` → `ACCURATE SWD`, `ANTIDOTE BREW` → `ANTIDOTE ALE`,
+  `BARDICHE +1` → `BARDICHE`).
+* The **order largely survives**: M&M1 items 1–10 land at M&M2 indices
+  4, 6, 15, 12, 14, 17, 21, 23, 22, 19, and items 60–64 at 93, 95, 94, 96, 97.
+  That is an edited list, not an independently written one.
+* Both tables end on the same joke — `(USELESS ITEM)` and `Useless Item`.
+
+And the cast recurs across titles even where the engine does not. M&M1 ships
+with `CRAG THE HACK`; M&M2's default party is six entirely different names; and
+`CRAG HACK` is back in M&M3's `MM3.CUR`, alongside `MAXIMUS`, `KASTORE` and
+`RESURECTRA`.
+
+So the fair summary is: **the content is a continuous line, the binaries are
+not.** New World Computing carried the world forward and rewrote the machinery
+underneath it — at least once, at 1 → 2, provably.
 
 ## M&M3 answers the 2 → 3 question by refusing it
 

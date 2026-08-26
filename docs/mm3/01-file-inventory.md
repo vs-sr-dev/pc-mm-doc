@@ -125,7 +125,11 @@ is, it opens with a doubled byte.
 
 ## Against the earlier games
 
-Three titles, three completely different shapes:
+Three titles, three completely different **shapes** — which is a statement about
+packaging, not about the engine. Nothing here tests what M&M3's code is or
+where it came from, and `MM3.EXE` is packed, so the binary-overlap test that
+proved M&M1 and M&M2 share no code cannot be run on it. Whether M&M3 recycles
+M&M2's engine is open.
 
 * M&M1 — 75 loose files, one code overlay per map, art converted at runtime.
 * M&M2 — 94 loose files, code overlays per subsystem, events as data, art
@@ -133,6 +137,7 @@ Three titles, three completely different shapes:
 * M&M3 — **six** files, two of which are hashed, compressed archives holding
   everything.
 
-The direction is consistent even though nothing is reused: each game moves more
-of itself out of the executable and into content, and packages that content more
-tightly. See [fingerprints](../comparison/fingerprints.md).
+The direction is consistent: each game moves more of itself out of the
+executable and into content, and packages that content more tightly. Whether
+anything *inside* is reused is a separate question, and for M&M3 an untested
+one. See [fingerprints](../comparison/fingerprints.md).
