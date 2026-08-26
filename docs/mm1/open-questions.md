@@ -1,87 +1,100 @@
 # Open questions
 
-Ordered by how much they would unlock.
+What is left on Might & Magic 1, roughly in order of how much each would
+unlock. Everything here is genuinely unresolved; where a route in is known, it
+is named.
 
-## 1. The overlay code (`*.OVR`)
+## 1. `WALLPIX.DTA` sprite geometry
 
-The overlays' engine calls are all resolved (doc 3), but the code between them
-has not been disassembled. This is where all per-map behaviour lives: which
-square triggers which event, every piece of map text, treasure and encounter
-placement, and the transitions between maps. It is by far the biggest remaining
-piece.
+The container and the codec are solved; the internal layout of each
+11,200-byte set is not. Each set is a concatenation of sprites of differing
+heights, with the *same* layout in all 18 sets — structural boundaries fall at
+identical offsets (1776, 1871, 3597, …) and the local repeat distance shifts
+along the file (~126, then ~96, then ~95, with a clean 32 near the end where a
+brick pattern does render correctly).
 
-The way in is now open: the load address `0xF48F` is established, so a
-disassembler can be pointed at the code with correct symbol resolution. The
-entry stub, identical in all 55 files, registers a dispatch table at code offset
-`+0x12` (`0xF4A1`) and the data base `0xC940`.
-
-Two header fields remain unexplained: `+0` (always `0x00F2`) and `+12` (always
-`0xF451 + code size`, i.e. 62 bytes below the code destination). Nothing
-observed so far depends on either.
-
-## 1b. The per-map parameter block
-
-Bounded at exactly 50 bytes and every byte attributed to the routines that read
-it (doc 7), with index 0 identified as the map id and index 1 as the map type.
-What remains is the encoding of individual fields — in particular the first two
-bytes of each of the four edge-transition triples, which name the destination
-map somehow but not by its index in the 55-map table. Disassembling the shared
-tail at `0x509D` and `loadnext` (`0x50E3`) should settle it.
-
-Indices 30, 31 and 32 are never read with a literal index anywhere in the
-engine, which is worth explaining on its own.
-
-## 1c. `pp4`
-
-`pp4` declares 20 events and carries the standard dispatcher, so the engine
-searches 20 ids, but only 10 of its handler words are valid addresses — the rest
-is text. (`demon`, the other outlier, is explained: it has no per-square events
-at all. See doc 8.)
-
-## 2. `WALLPIX.DTA` sprite geometry
-
-The container and the codec are solved; the internal layout of each 11,200-byte
-set is not. Each set is several sprites of differing heights, with the same
-layout in all 18 sets (see doc 5). The sprite table is almost certainly derived
-from the drawing code — `getshape` `0x14FB`, `nextwall` `0x1878`, `draw`
+Route in: the drawing code — `getshape` `0x14FB`, `nextwall` `0x1878`, `draw`
 `0x11D3`, `plot` `0x0F45` — and the `baseline` / `bufbasel` data tables.
 
-## 3. What the second maze plane means
+**This is the largest thing still fully unknown.**
 
-Plane 1 of `MAZEDATA.DTA` is per-side and tile-aligned, but its role is a
-hypothesis (drawn-vs-blocking) rather than a finding. Confirming it means
-reading the renderer. See doc 4 for what is measured and what the two candidate
-readings predict.
+## 2. The overlay code itself
 
-## 5. Record field meanings
+The overlays' engine calls are all resolved (doc 3) and their event tables are
+decoded (doc 8), but the code inside each handler has not been disassembled.
+That is where the actual per-map behaviour lives: what a statue does, what a
+shop sells, what a trap costs.
 
-Item records (10 stat bytes) and monster records (16 stat bytes) are located and
-tiled exactly, but the individual fields are not decoded. Doing so is mostly a
-matter of correlating with in-game values.
+Route in: the load address `0xF48F` is established, so a disassembler can be
+pointed at the code with correct symbol resolution.
 
-## 6. Which segment the overlay data lands in
+## 3. Which segment the overlay data lands in
 
 The `.OVR` header's data destination, `0xC940`, is solid as an offset — all 197
 string pointers in overlay code fall inside `[0xC940, 0xC940 + data size)`. But
 it cannot be an offset in either known segment: both hold live content there
 (the monster table's tail in one, 51 named routines in the other). A third,
-probably run-time-allocated block is the likely answer, and `getseg_` (`0x061A`)
-plus `ovloader_` (`0x010D`) are where to look. See doc 2.
+probably run-time-allocated block is the likely answer.
 
-Related and probably the same puzzle: `mondata` points 134 records into the
+Route in: `getseg_` (`0x061A`) and `ovloader_` (`0x010D`).
+
+Related, and probably the same puzzle: `mondata` points 134 records into the
 monster table rather than at its start, and a few late type-`0x03` symbols
 (`tp1`…`tp5`, `rum`, `spd1c1`) do not land on plausible boundaries under the
 otherwise well-confirmed base `0x10200`. See doc 6.
 
-## 7. `ROSTER.DTA`
+## 4. What the second maze plane means
 
-Recognised as the character roster and left alone — it is save data and the game
-rewrites it. Character record layout is not documented yet.
+Plane 1 of `MAZEDATA.DTA` is per-side and tile-aligned, but its role is a
+hypothesis (drawn-versus-blocking) rather than a finding. Doc 4 sets out what is
+measured and what the candidate readings predict.
 
-## 8. Which compiler and linker
+Route in: the renderer.
 
-The runtime symbols (`_STKSIZ_`, `_HEAPSIZ_`, `_mbot_`, `_mtop_`, `ctp__`,
-`_ioflg_`, `_PSP_`) identify a mid-1980s DOS C runtime and the `.RSM` extension
-belongs to its linker, but the exact toolchain has not been pinned down. Knowing
-it would explain the overlay mechanism and the two-segment layout directly
-rather than by inference.
+## 5. The destination fields in the edge transitions
+
+Each of the four edge triples is (unknown, unknown, map type). The first byte
+ranges 0–27, the second 0–15, and neither is an index into the 55-map table —
+`areaa1` gives its north and south neighbours the same value, which no 5×4 grid
+does.
+
+Route in: the shared tail at `0x509D` and `loadnext` (`0x50E3`).
+
+## 6. Record field meanings
+
+Item records (10 stat bytes) and monster records (16) are located and tile
+exactly, but the individual fields are not decoded. Mostly a matter of
+correlating with in-game values.
+
+## 7. Smaller loose ends
+
+* **`pp4`** declares 20 events and carries the standard dispatcher, so the
+  engine really does search 20 ids — but only 10 of its handler words are valid
+  addresses, the rest is text. (doc 8)
+* **Parameter indices 30, 31 and 32** are never read with a literal index
+  anywhere in the engine. (doc 7)
+* **13 mask bytes** out of 821 have `01` or `10` in a 2-bit field rather than
+  `00` or `11`. (doc 8)
+* **`ROSTER.DTA`** is recognised as the character roster and otherwise
+  untouched; it is save data and the game rewrites it.
+* **The toolchain.** The runtime symbols (`_STKSIZ_`, `_HEAPSIZ_`, `_mbot_`,
+  `_mtop_`, `ctp__`, `_ioflg_`, `_PSP_`) identify a mid-1980s DOS C runtime and
+  `.RSM` belongs to its linker, but the exact product is not pinned down.
+  Knowing it would explain the overlay mechanism and the segment layout
+  directly rather than by inference.
+
+## Settled since session 1
+
+For the record, because several of these were wrong at first and the
+corrections are the useful part:
+
+| | |
+|---|---|
+| Overlay load address | `0xF48F`, not the `0xF451` first inferred from header arithmetic |
+| `MAZEDATA` indexing | column-major `x*16+y`; session 1 rendered every map transposed |
+| Compass | north = +X, east = +Y |
+| Maze side value 2 | a door |
+| What indexes the event handlers | the packed position `(X << 4) | Y` |
+| Parameter block | exactly 50 bytes, every byte attributed to its consumers |
+| `demon` | has no per-square events at all |
+| `_Eol_ + 2` | coincidence; retracted |
