@@ -4,8 +4,8 @@
   python tools/mm1/extract_gfx.py [outdir]
 
 SCREEN0..9 are full 320x200 CGA frames. MONPIX.DTA holds 76 monster/scene
-portraits, each 26 bytes (104 px) wide by 96 rows. WALLPIX.DTA's internal
-sprite geometry is not yet solved, so its 18 sets are dumped as raw .bin.
+portraits, each 26 bytes (104 px) wide by 96 rows. Each WALLPIX.DTA set is
+twelve wall sprites; the geometry comes from the tables getshape reads (doc 5).
 """
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -29,5 +29,8 @@ print(f'{out}/mon00..{len(mons)-1:02d}.png  {len(mons)} portraits, 104x96 (+ con
 
 walls = mmlib.read_library('WALLPIX.DTA')
 for k, w in enumerate(walls):
-    open(f'{out}/wallset{k:02d}.bin', 'wb').write(w)
-print(f'{out}/wallset00..{len(walls)-1:02d}.bin  {len(walls)} sets x {len(walls[0])} bytes (geometry unsolved)')
+    for j, (bw, h, raw) in enumerate(mmlib.split_wallset(w)):
+        png.write(f'{out}/wall{k:02d}_{j:02d}.png', bw*4, h,
+                  mmlib.to_rgb(raw, bw, h))
+print(f'{out}/wall00_00..{len(walls)-1:02d}_11.png  '
+      f'{len(walls)} sets x {len(mmlib.WALL_SHAPES)} sprites')

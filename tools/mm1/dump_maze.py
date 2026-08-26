@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Print a map's wall plane as ASCII, oriented with north up.
 
-North is +X and east is +Y (doc 4), so X runs up the page and Y across it.
+The engine calls the north/south axis Y and the east/west axis X (doc 4), so
+Y runs up the page and X across it.
 
   python tools/mm1/dump_maze.py sorpigal [plane]
 
@@ -33,11 +34,11 @@ V = {0: ' ', 1: '|', 2: 'D', 3: '#'}
 sd = mmlib.side
 print(f'{name}  (map {mmlib.MAPS.index(name)})  plane {pl}'
       + (f'   * = one of {len(events)} event squares' if events and pl == 0 else ''))
-print('    north is up (+X), east is right (+Y)\n')
-for x in range(15, -1, -1):                       # north at the top
-    print('     ' + ''.join('+' + H[sd(p, x, y, mmlib.S_NORTH)] for y in range(16)) + '+')
-    print(f'X={x:<2d} ' + ''.join(V[sd(p, x, y, mmlib.S_WEST)]
-                                  + (' * ' if (x, y) in events else '   ')
-                                  for y in range(16)) + V[sd(p, x, 15, mmlib.S_EAST)])
-print('     ' + ''.join('+' + H[sd(p, 0, y, mmlib.S_SOUTH)] for y in range(16)) + '+')
-print('     ' + ''.join(f'{y:<4d}' for y in range(16)) + '  Y')
+print('    north is up (+Y), east is right (+X)\n')
+for y in range(15, -1, -1):                       # north at the top
+    print('     ' + ''.join('+' + H[sd(p, y, x, mmlib.S_NORTH)] for x in range(16)) + '+')
+    print(f'Y={y:<2d} ' + ''.join(V[sd(p, y, x, mmlib.S_WEST)]
+                                  + (' * ' if (y, x) in events else '   ')
+                                  for x in range(16)) + V[sd(p, y, 15, mmlib.S_EAST)])
+print('     ' + ''.join('+' + H[sd(p, 0, x, mmlib.S_SOUTH)] for x in range(16)) + '+')
+print('     ' + ''.join(f'{x:<4d}' for x in range(16)) + '  X')

@@ -18,13 +18,13 @@ the markers being tracked.
 | Topic | Status |
 |---|---|
 | [File inventory](docs/mm1/01-file-inventory.md) | complete |
-| [Executable layout and the shipped symbol map](docs/mm1/02-executable-and-symbols.md) | solid |
-| [Per-map code overlays (`*.OVR`)](docs/mm1/03-map-overlays.md) | header and load addresses solved; engine call graph resolved |
-| [Maze format (`MAZEDATA.DTA`)](docs/mm1/04-maze-format.md) | wall plane, indexing and compass solved; second plane open |
-| [Graphics formats (RLE, `SCREEN*`, `MONPIX`, `WALLPIX`)](docs/mm1/05-graphics-formats.md) | solved except `WALLPIX` sprite geometry |
-| [Data tables (items, monsters, hints)](docs/mm1/06-data-tables.md) | located and partly decoded |
-| [The overlay data block](docs/mm1/07-overlay-data-block.md) | text solved; parameter block bounded and attributed |
-| [The event system](docs/mm1/08-events.md) | solved: squares, facing masks and handlers |
+| [Executable layout and the shipped symbol map](docs/mm1/02-executable-and-symbols.md) | solved: record alignment, segment bases, where the overlays land |
+| [Per-map code overlays (`*.OVR`)](docs/mm1/03-map-overlays.md) | solved: header, loader, entry point, call graph |
+| [Maze format (`MAZEDATA.DTA`)](docs/mm1/04-maze-format.md) | solved: both planes |
+| [Graphics formats (RLE, `SCREEN*`, `MONPIX`, `WALLPIX`)](docs/mm1/05-graphics-formats.md) | solved, including `WALLPIX` sprite geometry and set selection |
+| [Data tables (items, monsters, hints, roster)](docs/mm1/06-data-tables.md) | tables placed and counted; stat fields not decoded |
+| [The overlay data block](docs/mm1/07-overlay-data-block.md) | solved: parameters, and where every map edge leads |
+| [The event system](docs/mm1/08-events.md) | solved: squares, facing masks, dispatch and handler idiom |
 | [Open questions](docs/mm1/open-questions.md) | what is left, and what was corrected along the way |
 
 ## Method
@@ -36,22 +36,32 @@ checked or overturned. Anything still uncertain is marked as such rather than
 smoothed over — and where a later measurement has overturned an earlier
 inference, the correction is in the history.
 
+The largest such correction is in [doc 2](docs/mm1/02-executable-and-symbols.md):
+`MM.RSM`'s trailing word per record is where a symbol *ends*, not where it
+starts, so reading it the obvious way mis-names all 579 symbols by one record —
+plausibly enough that several earlier findings were built on top of it.
+
 ## Using the tools
 
-The scripts under [`tools/`](tools/) are stdlib-only Python 3 (no third-party
-packages). Game-specific code lives in a per-game subdirectory; anything shared
-across titles sits at the top level. They expect the original game files, which
-are **not** part of this repository — point them at your own installed copy:
+The scripts under [`tools/`](tools/) are stdlib-only Python 3, except
+`disasm.py` which needs [Capstone](https://www.capstone-engine.org/).
+Game-specific code lives in a per-game subdirectory; anything shared across
+titles sits at the top level. They expect the original game files, which are
+**not** part of this repository — point them at your own installed copy:
 
 ```sh
 export MM1_DATA="/path/to/Might and Magic 1"
 
-python tools/mm1/extract_gfx.py out      # every picture in the game -> PNG
-python tools/mm1/dump_maze.py sorpigal   # a map's wall plane as ASCII
-python tools/mm1/dump_symbols.py         # the 579 symbols shipped in MM.RSM
-python tools/mm1/ovr_calls.py            # engine calls made by the 55 map overlays
-python tools/mm1/ovr_text.py sorpigal    # a map's event-handler table and text
-python tools/mm1/ovr_params.py sorpigal  # a map's 50 parameter bytes, annotated
+python tools/mm1/extract_gfx.py out       # every picture in the game -> PNG
+python tools/mm1/dump_maze.py sorpigal    # a map's wall plane as ASCII
+python tools/mm1/dump_symbols.py          # the 579 symbols shipped in MM.RSM
+python tools/mm1/ovr_calls.py             # engine calls made by the 55 overlays
+python tools/mm1/ovr_text.py sorpigal     # a map's event-handler table and text
+python tools/mm1/ovr_params.py sorpigal   # a map's 50 parameter bytes, annotated
+python tools/mm1/map_links.py             # where each map's four edges lead
+python tools/mm1/wallsets.py              # which wall graphics each map loads
+python tools/mm1/disasm.py draw           # an engine routine, by symbol name
+python tools/mm1/disasm.py --ovr sorpigal 0xf508    # one event handler
 ```
 
 `tools/mm1/mmlib.py` is the shared reader library if you want to work with the
@@ -63,7 +73,7 @@ data directly.
 docs/mm1/          Might & Magic 1
 docs/comparison/   cross-title analysis
 tools/png.py       shared, format-agnostic helpers
-tools/mm1/         Might & Magic 1 readers and dump scripts
+tools/mm1/         Might & Magic 1 readers, dump scripts and disassembler
 notes/mm1/         generated dumps
 ```
 

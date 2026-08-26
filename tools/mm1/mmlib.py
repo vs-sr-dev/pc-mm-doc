@@ -93,9 +93,10 @@ def to_rgb(buf, cols, height, pal=PAL):
 #   bytes 256..511  second plane (per-side attribute; see docs/03)
 # Each plane is a 16x16 grid stored COLUMN-MAJOR -- index = x*16 + y, the same
 # convention the graphics use. One byte per tile, four 2-bit fields, one per side.
-# North is +X and East is +Y (see docs/mm1/04-maze-format.md):
-#   bits 0-1 = West (-Y)   bits 2-3 = South (-X)
-#   bits 4-5 = East (+Y)   bits 6-7 = North (+X)
+# The engine calls the north/south axis Y and the east/west axis X, and indexes
+# a plane with (Y << 4) | X (see docs/mm1/04-maze-format.md):
+#   bits 0-1 = West (-X)   bits 2-3 = South (-Y)
+#   bits 4-5 = East (+X)   bits 6-7 = North (+Y)
 # Values: 0 open, 1 wall, 2 door, 3 special/solid.
 S_WEST, S_SOUTH, S_EAST, S_NORTH = 0, 1, 2, 3
 DIR_MASK = {'N': 0xC0, 'E': 0x30, 'S': 0x0C, 'W': 0x03}
@@ -106,24 +107,66 @@ def read_maze(which):
     blk = d[i*512:(i+1)*512]
     return blk[:256], blk[256:]
 
-def side(plane, x, y, k):
-    return (plane[x*16 + y] >> (2*k)) & 3
+def side(plane, ns, ew, k):
+    """One side of one tile. ns is the north/south coordinate (the engine's Y),
+    ew the east/west one (its X); k is one of S_WEST/S_SOUTH/S_EAST/S_NORTH."""
+    return (plane[ns*16 + ew] >> (2*k)) & 3
 
 # --- MM.RSM (linker symbol map) ----------------------------------------------
-def read_symbols():
-    """Yields (name, type, cls, offset). type 0x02 = code segment,
-    0x03 = data segment. The data segment starts at file offset 0x10200."""
+# The record is  <name> 0x00 <type> <class> <word>  -- but the trailing word is
+# where the symbol ENDS, not where it starts. A symbol therefore begins at the
+# end of the previous symbol of the same type, and the first symbol of each type
+# begins at 0. See doc 2: taking the word as the address shifts every symbol by
+# one record and mis-names the whole program.
+_RSM_NAME = None
+
+def _rsm():
+    global _RSM_NAME
     import re
+    if _RSM_NAME is None:
+        _RSM_NAME = re.compile(rb'[A-Za-z_][A-Za-z0-9_$.]*' + bytes([0]))
     d = open(path('MM.RSM'), 'rb').read()
-    out, i = [], 0x23
+    out, start, i = [], {}, 0x23
     while i < len(d) - 6:
-        m = re.match(rb'[A-Za-z_][A-Za-z0-9_$.]*\x00', d[i:i+64])
+        m = _RSM_NAME.match(d[i:i+64])
         if not m:
             i += 1; continue
         p = i + m.end()
-        out.append((m.group()[:-1].decode(), d[p], d[p+1],
-                    int.from_bytes(d[p+2:p+4], 'little')))
+        name, typ, cls = m.group()[:-1].decode(), d[p], d[p+1]
+        end = int.from_bytes(d[p+2:p+4], 'little')
+        # An absolute symbol (type 0x09) has no extent: the word is its value.
+        out.append((name, typ, cls, end if typ == 0x09 else start.get(typ, 0), end))
+        start[typ] = end
         i = p + 4
     return out
 
-DATA_SEG_FILE_BASE = 0x10200   # file offset of DS:0000 in MM.EXE
+
+def read_symbols():
+    """[(name, type, class, offset)]. type 0x02 = code segment, 0x03 = data."""
+    return [(n, t, c, o) for n, t, c, o, _e in _rsm()]
+
+
+def symbol_extents():
+    """[(name, type, start, end)] -- the same records, keeping the end too."""
+    return [(n, t, o, e) for n, t, _c, o, e in _rsm()]
+
+# File offset of DS:0000 in MM.EXE. The data segment is 0xC830 bytes (MM.RSM
+# header +12) and ends at the end of the load image, so it starts 0xC830 below
+# it. Confirmed independently by the wall-shape tables at DS:0x0CD2 (doc 5).
+DATA_SEG_FILE_BASE = 0x109B0
+CODE_SEG_FILE_BASE = 0x200
+
+# --- WALLPIX.DTA sprite table -------------------------------------------------
+# getshape (0x128C) decodes each 11,200-byte set as twelve sprites, taking the
+# byte width from the word table at DS:0x0CD2 and the height from DS:0x0CEA.
+# Widths are in bytes; one byte is four CGA pixels. See doc 5.
+WALL_SHAPES = [(8, 128), (10, 96), (6, 64), (4, 32),
+               (8, 128), (10, 96), (6, 64), (4, 32),
+               (44, 96), (24, 64), (12, 32), (4, 16)]
+
+def split_wallset(buf):
+    """One 11,200-byte WALLPIX set -> [(width_bytes, height, bytes), ...]."""
+    out, pos = [], 0
+    for w, h in WALL_SHAPES:
+        out.append((w, h, buf[pos:pos + w*h])); pos += w*h
+    return out

@@ -13,16 +13,17 @@ are the actual game; the rest is GOG packaging (DOSBox, icons, uninstaller).
 | `MAZEDATA.DTA` | 28,160 | 55 maps × 512 bytes. See [doc 4](04-maze-format.md). |
 | `WALLPIX.DTA` | 123,059 | 18 wall-graphic sets. See [doc 5](05-graphics-formats.md). |
 | `MONPIX.DTA` | 81,872 | 76 monster/scene portraits. |
-| `ROSTER.DTA` | 2,304 | Character roster (save data; mutated by the game). |
-| `GACARD.DTA` | 1 | Selected graphics adapter. Ships as `0x03`. |
+| `ROSTER.DTA` | 2,304 | Character roster: 18 records of 127 bytes plus an 18-byte occupancy tail. Save data; the game rewrites it. See [doc 6](06-data-tables.md). |
+| `GACARD.DTA` | 1 | Selected graphics adapter, written by `GRAPHSET.EXE`. Ships as `0x03`. |
 | `SCREEN0`…`SCREEN9` | 4,582–9,802 | Ten full-screen CGA images. |
 | `*.OVR` | 544–2,246 | 55 per-map code overlays. See [doc 3](03-map-overlays.md). |
 
 ## The 55 maps
 
 `MM.EXE` carries a table of 55 NUL-terminated names at data-segment offset
-`0x0A07` (file offset `0x10C07`). Each name has exactly one matching `.OVR`
-file, and the table order is the map index used by `MAZEDATA.DTA`.
+`0x0257` (file offset `0x10C07`). Each name has exactly one matching `.OVR`
+file, and the table order is the map index used by `MAZEDATA.DTA` — and by the
+per-map key table that resolves map-to-map transitions ([doc 7](07-overlay-data-block.md)).
 
 | # | name | # | name | # | name |
 |---:|---|---:|---|---:|---|
@@ -51,3 +52,8 @@ The five towns come first, then the nine caves, then the 5×4 outdoor grid
 
 `28,160 / 55 = 512` exactly, which is the first evidence that `MAZEDATA.DTA` is
 indexed by this same list.
+
+The order is not just convention: the engine's map-type field (1 town or cave,
+2 outdoor, 3 dungeon) is exactly the three runs above — maps 0–13, 14–33 and
+34–54 — and a transition looks up its destination by scanning forward from the
+first map of the named type. See [doc 7](07-overlay-data-block.md).
