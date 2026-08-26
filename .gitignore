@@ -1,0 +1,6 @@
+# Original game files -- never redistributed. Point MM1_DATA at your own copy.
+gamedata/
+# Generated output
+out/
+__pycache__/
+*.pyc
