@@ -51,16 +51,36 @@ Decoding M&M2's compression is the gate to everything else in it.
 
 | Topic | Status |
 |---|---|
-| [File inventory and the `.CC` archive](docs/mm3/01-file-inventory.md) | container solved; member compression and the filename hash open |
+| [File inventory and the `.CC` archive](docs/mm3/01-file-inventory.md) | container solved: directory cipher, tiling proof |
+| [The executable, and getting inside it](docs/mm3/02-executable.md) | solved: both layers of packing, relocations, the overlay pool |
+| [Inside the archives](docs/mm3/03-archive-members.md) | solved: member codec, filename hash, most member names |
 
-M&M3 ships **six files**. The whole game is two `.CC` archives, whose directory
-is obfuscated by a rotate-and-subtract with a running key; both constants were
-solved for, and the answer is confirmed by 798 members tiling their two
-containers with zero overlap and zero unused bytes.
+M&M3 ships **six files**. The whole game is two `.CC` archives whose directory
+is obfuscated and whose members are compressed, addressed by a 16-bit hash of a
+filename that the archive never stores.
 
-Its **packaging** is a third distinct shape. Its engine has not been tested at
-all — `MM3.EXE` is packed and the archive members are compressed — so whether
-M&M3 recycles M&M2's engine is open. See the
+All of that is now open, and the way in was the executable. `MM3.EXE` is packed
+twice — a loader that reopens its own file and LZW-decompresses the program out
+of its own tail, wrapped around a Microsoft EXEPACK image — and the 114 KB of
+Borland overlays past the end were never compressed at all. Inside is a Borland
+C++ 1991 program carrying 794 relocations, and inside *that* is the archive
+module: the directory cipher, the filename hash and the member decompressor, in
+plain assembly.
+
+The members are **LZHUF** — LZSS plus an adaptive Huffman tree — with one
+change from the published algorithm: the value the ring buffer is primed with
+is stored per member instead of being fixed at `' '`. All 556 compressed
+members decode to their declared size and consume their input to the byte, and
+all twelve `.raw` members land on exactly 64,000 bytes, which is a 320×200 VGA
+screen.
+
+**And the engine question is answered.** With the executable open, the
+binary-overlap test that showed M&M1 and M&M2 share no code now runs on M&M3:
+it shares no code with either. The eighteen byte runs it does share with
+`MM2.EXE` are seventeen string tables — the class list, the stat list, the
+condition list, the copyright banner — and one table of powers of two. Three
+consecutive titles, three independently built engines, with the game's
+vocabulary carried across each rewrite intact. See the
 [fingerprints](docs/comparison/fingerprints.md).
 
 ## Method
@@ -108,12 +128,17 @@ python tools/mm2/dump_font.py             # M&M2's 8x8 font
 
 export MM3_DATA="/path/to/Might and Magic 3"
 
-python tools/mm3/cc_list.py               # the 558 members of MM3.CC
+python tools/mm3/cc_list.py               # the 558 members of MM3.CC, named
 python tools/mm3/cc_list.py --check       # the tiling test that proves the key
+python tools/mm3/cc_extract.py out        # extract and decompress every member
+python tools/mm3/unpack_exe.py out        # undo both layers of packing on MM3.EXE
+python tools/mm3/dump_screen.py front.raw out/front.png
 ```
 
 `tools/mm1/mmlib.py`, `tools/mm2/mmlib2.py` and `tools/mm3/mmlib3.py` are the
-reader libraries if you want to work with the data directly.
+reader libraries if you want to work with the data directly; `tools/mm3/lzhuf.py`
+and `tools/mm3/exeunpack.py` are M&M3's codec and its executable unpacker,
+usable on their own.
 
 ## Layout
 
@@ -126,7 +151,7 @@ tools/png.py       shared, format-agnostic helpers
 tools/code_overlap.py  cross-title binary comparison
 tools/mm1/         Might & Magic 1 readers, dump scripts and disassembler
 tools/mm2/         Might & Magic 2 readers
-tools/mm3/         Might & Magic 3 readers
+tools/mm3/         Might & Magic 3 readers, codec and EXE unpacker
 gamedata/mm1/      your own copy of each game (gitignored, never committed)
 gamedata/mm2/
 gamedata/mm3/

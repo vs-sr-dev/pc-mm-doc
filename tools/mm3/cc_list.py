@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """List a Might & Magic 3 .CC archive.
 
-Members have no names in the file: the directory stores a 16-bit hash of the
-original filename, and the hash is not solved (doc mm3/01). They are listed by
-that id.
+The directory stores a 16-bit hash of each member's filename and no name, so
+names are recovered by hashing the filename literals in the unpacked MM3.EXE
+and matching (doc mm3/03). Members the search does not reach are listed by id.
 
   python tools/mm3/cc_list.py               # MM3.CC
   python tools/mm3/cc_list.py MM3.CUR       # the other archive
@@ -13,6 +13,7 @@ import os, sys, collections, math
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path[:0] = [HERE, os.path.dirname(HERE)]
 import mmlib3
+from names import table as name_table
 
 
 def entropy(b):
@@ -34,8 +35,11 @@ if len(sys.argv) > 1 and sys.argv[1] == '--check':
 
 fname = sys.argv[1] if len(sys.argv) > 1 else 'MM3.CC'
 ents = mmlib3.read_directory(fname)
-print(f'{fname}: {len(ents)} members')
-print(f'{"#":>4}  {"id":>4}  {"offset":>8}  {"size":>6}  bits/byte')
+table = name_table({m.id for m in ents})
+print(f'{fname}: {len(ents)} members, {len(table)} named')
+print(f'{"#":>4}  {"id":>4}  {"name":<14s} {"offset":>8}  {"stored":>6}  {"actual":>6}')
 for i, m in enumerate(ents):
-    print(f'{i:4d}  {m.id:04X}  {m.offset:8d}  {m.size:6d}  '
-          f'{entropy(mmlib3.read_member(m, fname)):9.2f}')
+    n = sorted(table.get(m.id, ()))
+    label = n[0] if len(n) == 1 else ('|'.join(n) if n else '')
+    print(f'{i:4d}  {m.id:04X}  {label:<14s} {m.offset:8d}  {m.size:6d}  '
+          f'{len(mmlib3.read_member(m, fname)):6d}')

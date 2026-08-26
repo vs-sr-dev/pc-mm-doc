@@ -1,11 +1,13 @@
 # Original game files -- never redistributed. One subdirectory per title; point
-# MM1_DATA / MM2_DATA at your own copies instead if you keep them elsewhere.
+# MM1_DATA / MM2_DATA / MM3_DATA at your own copies instead if you keep them elsewhere.
 gamedata/
 
 # Generated output. These are verbatim extractions of game content, so they are
 # regenerated locally by the tools rather than committed. See notes/README.md.
 out/
 notes/**/*.txt
+notes/**/*.png
+notes/**/*.bin
 
 __pycache__/
 *.pyc

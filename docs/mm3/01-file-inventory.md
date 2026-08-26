@@ -8,7 +8,7 @@ inside two containers.
 |---|---:|---|
 | `MM3.CC` | 3,430,389 | **The game.** 558 members: all the code, data and art. |
 | `MM3.CUR` | 207,551 | A second archive, same format, 240 members. Current game state. |
-| `MM3.EXE` | 280,032 | Loader. Packed — see below. |
+| `MM3.EXE` | 280,032 | Loader. Packed twice — see [doc 2](02-executable.md). |
 | `MM3.$$$` | 28,600 | Unexamined. |
 | `Mm3.com` | 776 | A launcher stub. |
 | `MM3.CFG` | 4 | Four bytes: `00 01 20 02`. |
@@ -71,27 +71,34 @@ once:
 Two independent archives, 798 members between them, tiling their containers to
 the byte with no slack and no collisions. There is no second reading.
 
+The routine that does it later turned up in the unpacked executable, and agrees
+to the constant — it adds `0xAC` with a `0x67` step, which is the same thing
+written the other way round. See [doc 3](03-archive-members.md).
+
 ```sh
 python tools/mm3/cc_list.py --check       # the table above
 python tools/mm3/cc_list.py               # every member of MM3.CC
 python tools/mm3/cc_list.py MM3.CUR
 ```
 
-### The member ids
+### The member ids — solved in doc 3
 
 The first field of an entry is a 16-bit value, unique across each archive and
 **not** sorted — neither ascending nor grouped. It behaves like a hash of the
 member's original filename, which is how the game asks for a file by name
 without storing any names.
 
-**The hash is not solved**, and cannot be from these files alone: it needs
-filename plaintext to test against, and there is none. `MM3.EXE` is packed
-(entropy 6.78, no readable strings, and a long `ydnaydnayd…` fill pattern), so
-the usual source of filename literals is closed off, and the 174 filename-shaped
-byte sequences found inside archive members are coincidences in compressed data
-— none of them hashes onto a real id under any rotate-and-add variant tried.
+That reading was right, and the hash function is now known: it is sixteen
+instructions in the archive module, and the names come back by hashing the
+filename literals in the program rather than by inverting anything. See
+[doc 3](03-archive-members.md).
 
-Unpacking `MM3.EXE` is the route in.
+What this document originally concluded — that the hash *could not* be solved
+from these files, for want of filename plaintext — was wrong in the same way
+that "the executable is packed" is not the same as "the executable is closed".
+The plaintext was inside `MM3.EXE` the whole time; the 174 filename-shaped
+sequences found in the compressed members really were coincidences, but they
+were never the only source.
 
 ## What the members hold
 
@@ -104,7 +111,10 @@ The two archives are used quite differently, and the entropy says so cleanly:
 
 Every substantial member of `MM3.CC` is compressed; **not one** member of
 `MM3.CUR` is. That fits what they are for — `MM3.CC` is the shipped content,
-`MM3.CUR` is the live game state the program writes back.
+`MM3.CUR` is the live game state the program writes back. It is also, exactly,
+the rule the game applies: members whose name begins `MAZE` are stored
+verbatim, everything else is compressed, and every member of `MM3.CUR` is a
+`maze*` file.
 
 The small members of `MM3.CC` that are not compressed are startup messages, and
 they read straight out:
@@ -117,19 +127,24 @@ id 9B08   237 bytes  " There are only %lu bytes free on your hard drive. ..."
 `MM3.CUR` is plain throughout, and its members are readable as data — character
 records (`Sir Canegm`), tables, `"…ault Characters"`.
 
-**The member compression is not solved.** One structural clue is recorded here
-for whoever picks it up: **556 of 558 members of `MM3.CC` begin with two
-identical bytes** (`1F 1F …`, `FA FA …`, `56 56 …`), against 84 of 240 in the
-uncompressed `MM3.CUR`, which is about what chance gives. Whatever the format
-is, it opens with a doubled byte.
+**The member compression is LZHUF**, and the structural clue recorded here
+before it was decoded turned out to be the key to it: **556 of 558 members of
+`MM3.CC` begin with two identical bytes** (`1F 1F …`, `FA FA …`, `56 56 …`),
+against 84 of 240 in the uncompressed `MM3.CUR`, which is about what chance
+gives. The doubled byte is the value the codec primes its ring buffer with,
+stored twice so the fill can be done a word at a time. See
+[doc 3](03-archive-members.md).
 
 ## Against the earlier games
 
-Three titles, three completely different **shapes** — which is a statement about
-packaging, not about the engine. Nothing here tests what M&M3's code is or
-where it came from, and `MM3.EXE` is packed, so the binary-overlap test that
-proved M&M1 and M&M2 share no code cannot be run on it. Whether M&M3 recycles
-M&M2's engine is open.
+Three titles, three completely different **shapes**. When this document was
+written that was a statement about packaging only, because `MM3.EXE` was packed
+and nothing here tested what M&M3's code is or where it came from.
+
+That is no longer the case. The executable [comes apart](02-executable.md), and
+the binary-overlap test now runs on M&M3 as it did on the other two: **no
+instruction bytes are shared with M&M2 or M&M1**, only string tables. See
+[fingerprints](../comparison/fingerprints.md).
 
 * M&M1 — 75 loose files, one code overlay per map, art converted at runtime.
 * M&M2 — 94 loose files, code overlays per subsystem, events as data, art
@@ -138,6 +153,4 @@ M&M2's engine is open.
   everything.
 
 The direction is consistent: each game moves more of itself out of the
-executable and into content, and packages that content more tightly. Whether
-anything *inside* is reused is a separate question, and for M&M3 an untested
-one. See [fingerprints](../comparison/fingerprints.md).
+executable and into content, and packages that content more tightly.
