@@ -42,4 +42,5 @@ def main():
     for k, v in cnt.most_common():
         print(f"{v:6d} {reach[k]:5d}/55  {k}")
 
-main()
+if __name__ == '__main__':
+    main()

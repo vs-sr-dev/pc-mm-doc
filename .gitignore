@@ -1,6 +1,10 @@
 # Original game files -- never redistributed. Point MM1_DATA at your own copy.
 gamedata/
-# Generated output
+
+# Generated output. These are verbatim extractions of game content, so they are
+# regenerated locally by the tools rather than committed. See notes/README.md.
 out/
+notes/**/*.txt
+
 __pycache__/
 *.pyc
