@@ -6,25 +6,26 @@ markers that came out of the Might & Magic 1 analysis. Each one is a question
 that can be answered against a later title in minutes, long before that title
 is fully documented.
 
-M&M2 has had a first pass ([mm2/01](../mm2/01-file-inventory.md)); nothing
-below has been tested on any later title. Both game columns say what that game
-does, not a prediction.
+M&M2 and M&M3 have each had a first pass ([mm2/01](../mm2/01-file-inventory.md),
+[mm3/01](../mm3/01-file-inventory.md)); nothing below has been tested on any
+later title. Every game column says what that game does, not a prediction.
 
-| # | Marker | How to test | M&M1 | M&M2 |
-|---:|---|---|---|---|
-| 1 | RLE codec | look for escape `0x7B`, run length = `count + 1` | yes, used for every picture | **no** — a different, higher-entropy codec, not yet decoded |
-| 2 | Pixel order | decode a title screen row-major vs column-major | column-major, `col * height + row` | unknown until the codec is decoded |
-| 3 | Event storage | are the per-map files code or data? | 8086 code overlays, one per map | **data** — `EVENTSI.DAT` / `EVENTSO.DAT` |
-| 4 | Map size and wall encoding | 16×16, four 2-bit sides packed in one byte? | yes, 512 bytes per map | `MAP.DAT` is compressed; not a flat array |
-| 5 | Second map plane | is there one, and does it hold walls or state? | yes — per-side lock latches plus four per-tile flags | unknown |
-| 6 | Record shapes | item and monster record sizes, name field width | items 24 B (14-char name first), monsters 32 B (15-char name first) | items **20 B** (12-char name first); monsters compressed |
-| 7 | Shipped build artefacts | is there a stray symbol map / link map? | yes — `MM.RSM`, 579 symbols | **no** |
-| 8 | Overlay header | a magic word, then (dest, size) pairs and an entry point? | `0x00F2`, two load descriptors, entry 62 bytes below the code end | **none** — raw code, thirteen of fourteen start `55 8B EC` |
-| 9 | Map identity | how does one map name another? | a 16-bit key looked up in a table, scoped by map type | unknown |
-| 10 | Wall art | one set per map, or several? | three sets per map out of 18, chosen by the same key scheme | terrain-named picture sets, one per environment |
-| 11 | Video strategy | one art set converted at runtime, or per-adapter art? | CGA art converted to EGA/Tandy at runtime | **per-adapter art**: 31 pictures shipped `.4` and `.16`, plus five `.DRV` |
-| 12 | Font | shipped as a file, or built at runtime? | built in memory at startup | shipped: `MM2.CH`, 128 glyphs of 8×8, ASCII-indexed |
-| 13 | Relocations | how many does the executable carry? | **3** | **500** |
+| # | Marker | How to test | M&M1 | M&M2 | M&M3 |
+|---:|---|---|---|---|---|
+| 1 | RLE codec | look for escape `0x7B`, run length = `count + 1` | yes, used for every picture | **no** — a different, higher-entropy codec, not yet decoded | n/a — everything is inside `MM3.CC`, compressed by an unidentified scheme |
+| 2 | Pixel order | decode a title screen row-major vs column-major | column-major, `col * height + row` | unknown until the codec is decoded | unknown |
+| 3 | Event storage | are the per-map files code or data? | 8086 code overlays, one per map | **data** — `EVENTSI.DAT` / `EVENTSO.DAT` | unknown — no loose per-map files at all |
+| 4 | Map size and wall encoding | 16×16, four 2-bit sides packed in one byte? | yes, 512 bytes per map | `MAP.DAT` is compressed; not a flat array | unknown |
+| 5 | Second map plane | is there one, and does it hold walls or state? | yes — per-side lock latches plus four per-tile flags | unknown | unknown |
+| 6 | Record shapes | item and monster record sizes, name field width | items 24 B (14-char name first), monsters 32 B (15-char name first) | items **20 B** (12-char name first); monsters compressed | unknown |
+| 7 | Shipped build artefacts | is there a stray symbol map / link map? | yes — `MM.RSM`, 579 symbols | **no** | **no** |
+| 8 | Overlay header | a magic word, then (dest, size) pairs and an entry point? | `0x00F2`, two load descriptors, entry 62 bytes below the code end | **none** — raw code, thirteen of fourteen start `55 8B EC` | n/a — no loose overlays |
+| 9 | Map identity | how does one map name another? | a 16-bit key looked up in a table, scoped by map type | unknown | unknown |
+| 10 | Wall art | one set per map, or several? | three sets per map out of 18, chosen by the same key scheme | terrain-named picture sets, one per environment | unknown |
+| 11 | Video strategy | one art set converted at runtime, or per-adapter art? | CGA art converted to EGA/Tandy at runtime | **per-adapter art**: 31 pictures shipped `.4` and `.16`, plus five `.DRV` | unknown |
+| 12 | Font | shipped as a file, or built at runtime? | built in memory at startup | shipped: `MM2.CH`, 128 glyphs of 8×8, ASCII-indexed | unknown |
+| 13 | Relocations | how many does the executable carry? | **3** | **500** | n/a — `MM3.EXE` is packed |
+| 14 | Packaging | loose files, or an archive? | 75 loose files | 94 loose files | **two hashed archives**, six files in all |
 
 ## Marker 3 flipped immediately
 
@@ -55,6 +56,31 @@ The rebuild happened between book one and book two, not later. Whatever
 continuity survives the jump is therefore *content*, not architecture — and
 some does: both item tables are name-first and both end on a joke item.
 
+## M&M3 answers the 2 → 3 question by refusing it
+
+The boundary this project was set up to examine was 2 → 3. It turns out there
+is no shared surface to compare across it. M&M3 ships **six files**: two
+archives, a packed loader, a launcher stub, a config word and an installer.
+There are no per-map files to classify, no overlays to check for a header, no
+loose art to test a codec on. Most markers simply do not apply until the
+archive's member compression is decoded.
+
+What can be said is that the direction has never reversed. Each title moves
+more of itself out of the executable and into content, and packages that
+content more tightly:
+
+| | M&M1 | M&M2 | M&M3 |
+|---|---|---|---|
+| files shipped | 75 | 94 | **6** |
+| where per-map behaviour lives | compiled code | data files | inside an archive |
+| how content is named | filename, or a 16-bit key in a table | filename | a 16-bit hash, no names stored |
+
+The last row is the one worth flagging. M&M1 already refused to store a plain
+map index, resolving destinations through a 16-bit key looked up in a table
+(marker 9). M&M3 does the same thing to filenames: the archive directory stores
+a 16-bit hash and no name at all. Different mechanism, same instinct, five years
+apart — and it is the only habit that visibly survives two complete rebuilds.
+
 ## Marker 9 is worth its own note
 
 M&M1 never stores a map *number* in data that ships with a map. A destination —
@@ -73,10 +99,12 @@ The series was expected to split as M&M1 (1986/87) with M&M2 (1988); M&M3
 so clearly share an engine; and M&M6 (1998), a different 3D engine entirely.
 The boundary picked out in advance as the one to look at first was **2 → 3**.
 
-That grouping is wrong at its first join. M&M1 and M&M2 do not share an engine
-in any meaningful sense — every structural marker differs. Whether M&M2 and
-M&M3 belong together is now the open question, and it is the next thing worth
-testing.
+That grouping is wrong at both of its first two joins. M&M1 and M&M2 do not
+share an engine in any meaningful sense — every structural marker differs — and
+M&M3 discards the loose-file layout entirely for two hashed archives. Three
+consecutive titles, three architectures. Whether M&M3 and *World of Xeen*
+belong together is now the open question, and `MM3.CC`'s member compression is
+what has to be decoded to ask it.
 
 ## Prior art
 

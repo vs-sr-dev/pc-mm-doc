@@ -42,6 +42,21 @@ Computing was expected somewhere around book three happened at book two.
 
 Decoding M&M2's compression is the gate to everything else in it.
 
+## Might & Magic 3 — Isles of Terra
+
+| Topic | Status |
+|---|---|
+| [File inventory and the `.CC` archive](docs/mm3/01-file-inventory.md) | container solved; member compression and the filename hash open |
+
+M&M3 ships **six files**. The whole game is two `.CC` archives, whose directory
+is obfuscated by a rotate-and-subtract with a running key; both constants were
+solved for, and the answer is confirmed by 798 members tiling their two
+containers with zero overlap and zero unused bytes.
+
+Three consecutive titles, three architectures — see the
+[fingerprints](docs/comparison/fingerprints.md) for what that does to the
+comparison this project was set up to make.
+
 ## Method
 
 Every claim here was derived from the shipped files and validated against them,
@@ -84,30 +99,38 @@ export MM2_DATA="/path/to/Might and Magic 2"
 
 python tools/mm2/dump_items.py            # M&M2's 256 items
 python tools/mm2/dump_font.py             # M&M2's 8x8 font
+
+export MM3_DATA="/path/to/Might and Magic 3"
+
+python tools/mm3/cc_list.py               # the 558 members of MM3.CC
+python tools/mm3/cc_list.py --check       # the tiling test that proves the key
 ```
 
-`tools/mm1/mmlib.py` and `tools/mm2/mmlib2.py` are the reader libraries if you
-want to work with the data directly.
+`tools/mm1/mmlib.py`, `tools/mm2/mmlib2.py` and `tools/mm3/mmlib3.py` are the
+reader libraries if you want to work with the data directly.
 
 ## Layout
 
 ```
 docs/mm1/          Might & Magic 1
 docs/mm2/          Might & Magic 2
+docs/mm3/          Might & Magic 3
 docs/comparison/   cross-title analysis
 tools/png.py       shared, format-agnostic helpers
 tools/mm1/         Might & Magic 1 readers, dump scripts and disassembler
 tools/mm2/         Might & Magic 2 readers
+tools/mm3/         Might & Magic 3 readers
 gamedata/mm1/      your own copy of each game (gitignored, never committed)
 gamedata/mm2/
+gamedata/mm3/
 notes/mm1/         generated dumps
 ```
 
 ## Provenance
 
-Analysed against the GOG.com releases of *Might and Magic 1* and *Might and
-Magic 2* (legally purchased copies), which ship the original DOS files
-unmodified alongside DOSBox.
+Analysed against the GOG.com releases of *Might and Magic 1*, *2* and *3*
+(legally purchased copies), which ship the original DOS files unmodified
+alongside DOSBox.
 
 ## Legal
 
