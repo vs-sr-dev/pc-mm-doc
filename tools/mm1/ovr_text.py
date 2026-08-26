@@ -2,9 +2,12 @@
 """Extract the data block of each map overlay: event-handler table and text.
 
 The data half of an .OVR is loaded at 0xC940 and holds, in order:
-  - a block of per-map binary parameters (variable length, not decoded)
-  - a table of words pointing into the overlay's own code: the event handlers
+  - 50 bytes of per-map parameters (see tools/mm1/ovr_params.py)
+  - the event tables: a count, then that many ids, masks and handler words
   - NUL-terminated text strings
+
+One map, `demon`, has no event tables at all -- its text starts right after the
+parameter block.
 
 Text is written for a 40-column display: 0x0D is an explicit line break, and
 longer runs rely on the engine wrapping hard at column 40. Pass --wrap to see
@@ -30,20 +33,34 @@ def blocks(name):
     dsz = struct.unpack('<I', d[8:12])[0]
     return d[14:14+cs], d[14+cs:14+cs+dsz]
 
+NPARAM = 50            # the parameter block; the event count sits right after it
+
+# The dispatch routine 54 of the 55 overlays carry (see doc 8):
+#   mov al,[3C3A] / mov bx,0 / cmp al,[bx+0C973h] / je .. / inc bl
+#   cmp bl,[0C972h] / jb ..
+# Match on the opcode skeleton: the two jump displacements vary between maps.
+MOVBX0 = bytes.fromhex('bb0000')
+CMPIDX = bytes.fromhex('3a87')
+INCBL  = bytes.fromhex('fec3')
+CMPCNT = bytes.fromhex('3a1e')
+
+def has_events(code):
+    p = struct.unpack('<H', code[1:3])[0] - CODE_BASE     # pointer the stub registers
+    if p < 0 or p + 20 > len(code):
+        return False
+    return (code[p] == 0xA0 and code[p+3:p+6] == MOVBX0
+            and code[p+6:p+8] == CMPIDX and code[p+10] == 0x74
+            and code[p+12:p+14] == INCBL and code[p+14:p+16] == CMPCNT
+            and code[p+18] == 0x72)
+
 def handler_table(code, data):
-    """Longest run of words that point into this overlay's own code."""
-    hi = CODE_BASE + len(code)
-    best_n = best_off = 0
-    i = 0
-    while i + 2 <= len(data):
-        j, n = i, 0
-        while j + 2 <= len(data) and CODE_BASE <= struct.unpack('<H', data[j:j+2])[0] < hi:
-            j += 2; n += 1
-        if n > best_n:
-            best_n, best_off = n, i
-        i = j + 2 if n else i + 1
-    return best_off, [struct.unpack('<H', data[best_off+2*k:best_off+2*k+2])[0]
-                      for k in range(best_n)]
+    """(offset, handler words). Empty for a map with no per-square events."""
+    if not has_events(code):
+        return NPARAM, []
+    n = data[NPARAM]                       # count, then n ids, n masks, n words
+    off = NPARAM + 1 + 2*n
+    return off, [struct.unpack('<H', data[off+2*k:off+2*k+2])[0]
+                 for k in range(n) if off+2*k+2 <= len(data)]
 
 def strings(data):
     """NUL-terminated runs of printable text, with their load addresses."""

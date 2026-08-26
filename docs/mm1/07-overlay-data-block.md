@@ -10,12 +10,14 @@ three regions, in this order:
 ```
 
 Across the 55 maps this accounts for 37,858 bytes of data against 43,236 bytes
-of code, holding **816 event handlers** and **649 text strings**.
+of code, holding **821 event handlers** and **649 text strings**.
 
 ## The event-handler table
 
-A run of words, every one of which falls inside `[0xF48F, 0xF48F + code size)` —
-this overlay's own code. Sorpigal's has 24 entries:
+The count sits at offset 50, right after the parameter block, and the handler
+words follow the id and mask arrays (doc 8). Every word falls inside
+`[0xF48F, 0xF48F + code size)` — this overlay's own code. Sorpigal's has 24
+entries:
 
 ```
 F4E0 F508 F55D F570 F583 F5A8 F5BB F5CE
@@ -23,10 +25,9 @@ F5E1 F6A2 F6BD F6C5 F6CD F6D5 F6DD F6E5
 F6ED F6F5 F715 F71D F725 F72D F74C F769
 ```
 
-The entries are ascending and the run is unmistakable — a word landing in that
-range by chance has probability `code size / 65536`, about 1.3 %, so a run of
-24 cannot be accidental. The tool finds the table by taking the longest such
-run.
+The entries are ascending, and a word landing in that range by chance has
+probability `code size / 65536`, about 1.3 %, so a run of 24 cannot be
+accidental.
 
 Handler counts track how much is going on in a map, which is a good sanity
 check on the interpretation:
@@ -40,10 +41,7 @@ check on the interpretation:
 Towns are dense with shops, inns and temples; open countryside has a handful of
 transitions and set pieces.
 
-**What indexes this table is not yet known.** The engine is handed a pointer at
-overlay entry (`mov [0134h], ax`), and the natural guess is that a per-square
-event id selects a handler, but that has not been traced. See
-[open questions](open-questions.md).
+What indexes the table is settled: see [doc 8](08-events.md).
 
 ## The parameter block
 

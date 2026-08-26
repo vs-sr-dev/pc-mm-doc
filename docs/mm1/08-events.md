@@ -21,9 +21,9 @@ F4B8  e9 42 51        jmp  45FDh             ; resgrph
 F4BB  found: ...
 ```
 
-**54 of the 55 overlays carry this routine byte-for-byte**, with the same
-addresses and the same variable. `demon` is the exception and uses a different
-shape.
+**54 of the 55 overlays carry this routine**, with the same addresses and the
+same variable; only the two jump displacements vary. `demon` is the exception —
+see below.
 
 ## `[3C3A]` is a packed coordinate
 
@@ -46,14 +46,18 @@ routines: `yplus` (`0x5022`) and `ymin` (`0x5076`) both write `[3C38]`, and
 Three parallel arrays, at fixed addresses, preceded by a count:
 
 ```
-0xC972   byte      N, the number of events on this map
-0xC973   N bytes   event squares, each (X << 4) | Y
-0xC973+N N bytes   direction mask, one per event
-0xC973+2N N words  handler addresses, one per event
+offset 50   byte      N, the number of events on this map   (0xC972)
+offset 51   N bytes   event squares, each (X << 4) | Y      (0xC973)
+   + N      N bytes   direction mask, one per event
+   + 2N     N words   handler addresses, one per event
 ```
 
-816 events across the 55 maps: 17–29 for a town, 6–10 for open countryside.
-Handler entries of `FFFF` occur and mark a slot with no routine.
+Offset 50 is exactly where the 50-byte parameter block ends (doc 7), so the two
+structures tile with nothing in between.
+
+**821 events across the 54 maps that have them**: 17–29 for a town, 6–10 for
+open countryside. Handler entries of `FFFF` occur and mark a slot with no
+routine.
 
 ### The direction mask
 
@@ -97,11 +101,38 @@ python tools/mm1/dump_maze.py sorpigal    # walls with event squares marked
 python tools/mm1/ovr_text.py sorpigal     # the handler table and the text
 ```
 
-## Loose ends
+## The two maps that differ
 
-* `demon` uses a different dispatcher and is not covered by the layout above.
-* `pp4` declares 20 events but only 10 of its handler words are valid code
-  addresses; the rest is text. Either its count means something else or the
-  arrays are laid out differently.
-* What the handler does once selected — and how the 13 mask bytes with `01` or
-  `10` fields behave — is not traced.
+**`demon` has no per-square events at all.** Its dispatcher does not search
+anything:
+
+```
+F4A1  e8 bd 4e     call (engine)
+      b8 72 c9     mov  ax, 0C972h
+      a3 d4 3b     mov  [3BD4], ax     ; the string-pointer variable
+      b0 11        mov  al, 11h
+      a2 c3 3b     mov  [3BC3], al
+```
+
+It prints the string at `0xC972` — the address every other map uses for its
+event count — and runs a fixed sequence. `demon`'s text simply starts where the
+parameter block ends:
+
+```
+A STRANGE ALIEN BEING IN A SHIMMERING
+SILVER JUMPSUIT PROCLAIMS, "THIS IS A
+SOUL MAZE AND YOU ARE ITS PRISONER! ...
+```
+
+Reading its byte at offset 50 as a count yields 65, which is just the `A` of
+that sentence. That accounts for the whole discrepancy between the 886 events a
+naive sum reports and the 821 that exist.
+
+**`pp4` declares 20 events but only 10 usable handlers.** Its dispatcher is the
+standard one, so the engine really does search 20 ids, but the word array holds
+10 valid addresses followed by text. Not explained.
+
+## Still open
+
+What a handler does once selected is not traced, nor how the 13 mask bytes with
+`01` or `10` fields behave.

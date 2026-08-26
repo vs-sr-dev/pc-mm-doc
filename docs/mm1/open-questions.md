@@ -31,10 +31,12 @@ tail at `0x509D` and `loadnext` (`0x50E3`) should settle it.
 Indices 30, 31 and 32 are never read with a literal index anywhere in the
 engine, which is worth explaining on its own.
 
-## 1c. Two maps that do not fit the event layout
+## 1c. `pp4`
 
-`demon` uses a different dispatcher shape, and `pp4` declares 20 events but has
-only 10 valid handler words. Both need looking at individually. See doc 8.
+`pp4` declares 20 events and carries the standard dispatcher, so the engine
+searches 20 ids, but only 10 of its handler words are valid addresses — the rest
+is text. (`demon`, the other outlier, is explained: it has no per-square events
+at all. See doc 8.)
 
 ## 2. `WALLPIX.DTA` sprite geometry
 
